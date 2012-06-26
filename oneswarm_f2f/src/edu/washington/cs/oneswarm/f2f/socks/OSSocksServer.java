@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 public class OSSocksServer implements Runnable {
     Logger log;
     private static final int BUFFER_SIZE = 1024;
-    private int localPort;
+    private final int localPort;
     private ServerSocketChannel serverSocket;
 
     public OSSocksServer(int localPort) {
@@ -21,6 +21,7 @@ public class OSSocksServer implements Runnable {
         this.localPort = localPort;
     }
 
+    @Override
     public void run() {
         try {
             serverSocket = ServerSocketChannel.open();
@@ -29,7 +30,8 @@ public class OSSocksServer implements Runnable {
             while (true) {
                 try {
                     SocketChannel incomingConnection = serverSocket.accept();
-                    log.fine("Accepted connection via SOCKS from " + incomingConnection.getRemoteAddress());
+                    log.fine("Accepted connection via SOCKS from "
+                            + incomingConnection.socket().getRemoteSocketAddress());
                     new Thread(new OSSocksServerThread(incomingConnection, BUFFER_SIZE)).start();
                 } catch (IOException e) {
                     e.printStackTrace();

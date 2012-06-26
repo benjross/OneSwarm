@@ -15,7 +15,7 @@ class OSSocksServerThread implements Runnable {
     private SocketChannel client;
     private SocketChannel remote;
 
-    private int bufferSize;
+    private final int bufferSize;
     private ByteBuffer buf;
 
     // Stores the remote host request in the format presented by the client.
@@ -35,6 +35,7 @@ class OSSocksServerThread implements Runnable {
         remoteID = new byte[0];
     }
 
+    @Override
     public void run() {
 
         buf = ByteBuffer.allocate(bufferSize);
@@ -198,7 +199,8 @@ class OSSocksServerThread implements Runnable {
     private void createPipe(SocketChannel client, InetSocketAddress remoteHost) throws IOException {
         // Set up connection - This is where the hand-off to
         // OneSwarm will go
-        log.info("Creating bi-directional pipe between " + client.socket().getRemoteSocketAddress() + " and " + remoteHost.getHostString());
+        log.info("Creating bi-directional pipe between " + client.socket().getRemoteSocketAddress()
+                + " and " + remoteHost.toString());
         remote = SocketChannel.open(remoteHost);
         new Thread(new TcpPipe(client, remote)).start();
         new Thread(new TcpPipe(remote, client)).start();
@@ -230,6 +232,7 @@ class OSSocksServerThread implements Runnable {
             output = out;
         }
 
+        @Override
         public void run() {
             ByteBuffer buf = ByteBuffer.allocate(bufferSize);
             int len = 0;
