@@ -11,13 +11,13 @@ import java.nio.channels.SocketChannel;
 import java.util.logging.Logger;
 
 public class OSSocksServer implements Runnable {
-    Logger log;
+    public final static Logger logger = Logger.getLogger(OSSocksServer.class.getName());
+
     private static final int BUFFER_SIZE = 1024;
     private final int localPort;
     private ServerSocketChannel serverSocket;
 
     public OSSocksServer(int localPort) {
-        log = Logger.getLogger(OSSocksServer.class.getName());
         this.localPort = localPort;
     }
 
@@ -30,7 +30,7 @@ public class OSSocksServer implements Runnable {
             while (true) {
                 try {
                     SocketChannel incomingConnection = serverSocket.accept();
-                    log.fine("Accepted connection via SOCKS from "
+                    logger.fine("Accepted connection via SOCKS from "
                             + incomingConnection.socket().getRemoteSocketAddress());
                     new Thread(new OSSocksServerThread(incomingConnection, BUFFER_SIZE)).start();
                 } catch (IOException e) {

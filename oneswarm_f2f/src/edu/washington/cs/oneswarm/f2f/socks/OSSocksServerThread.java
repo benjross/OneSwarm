@@ -8,10 +8,7 @@ import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 
-import org.apache.log4j.Logger;
-
 class OSSocksServerThread implements Runnable {
-    Logger log;
     private SocketChannel client;
     private SocketChannel remote;
 
@@ -29,7 +26,6 @@ class OSSocksServerThread implements Runnable {
     private InetSocketAddress remoteHost;
 
     public OSSocksServerThread(SocketChannel socket, int bufferSize) {
-        log = Logger.getLogger(OSSocksServer.class.getName());
         client = socket;
         this.bufferSize = bufferSize;
         remoteID = new byte[0];
@@ -88,6 +84,7 @@ class OSSocksServerThread implements Runnable {
         buf.get(); // Reserved Byte
         byte addressType = buf.get();
         int length = 4;
+        int port = 0;
 
         try{
         switch (addressType) {
@@ -97,10 +94,12 @@ class OSSocksServerThread implements Runnable {
             remoteID = new byte[length + 3];
             remoteID[0] = addressType;
             readNBytes(buf, length + 2);
-            buf.get(remoteID, 2, length + 2);
+                buf.get(remoteID, 1, length + 2);
+                port = (remoteID[remoteID.length - 2] & 0xff) << 8
+                        | (remoteID[remoteID.length - 1] & 0xff);
             remoteHost = new InetSocketAddress(
-                    InetAddress.getByAddress(Arrays.copyOfRange(remoteID, 1, length + 1)),
-                    (remoteID[remoteID.length - 2] & 0xff) << 2 + (remoteID[remoteID.length - 1] & 0xff));
+InetAddress.getByAddress(Arrays.copyOfRange(
+                        remoteID, 1, length + 1)), port);
             break;
 
         case SocksConstants.AddressType.DOMAIN_NAME:
@@ -111,7 +110,7 @@ class OSSocksServerThread implements Runnable {
             remoteID[1] = (byte) length;
             readNBytes(buf, length + 2);
             buf.get(remoteID, 2, length + 2);
-            int port = (remoteID[remoteID.length - 2] & 0xff) << 8
+                port = (remoteID[remoteID.length - 2] & 0xff) << 8
                     | (remoteID[remoteID.length - 1] & 0xff);
             remoteHost = new InetSocketAddress(InetAddress.getByName(new String(Arrays.copyOfRange(
                     remoteID, 2, length + 2))), port);
@@ -199,7 +198,8 @@ class OSSocksServerThread implements Runnable {
     private void createPipe(SocketChannel client, InetSocketAddress remoteHost) throws IOException {
         // Set up connection - This is where the hand-off to
         // OneSwarm will go
-        log.info("Creating bi-directional pipe between " + client.socket().getRemoteSocketAddress()
+        OSSocksServer.logger.info("Creating bi-directional pipe between "
+                + client.socket().getRemoteSocketAddress()
                 + " and " + remoteHost.toString());
         remote = SocketChannel.open(remoteHost);
         new Thread(new TcpPipe(client, remote)).start();
@@ -217,10 +217,10 @@ class OSSocksServerThread implements Runnable {
     }
 
     private void readNBytes(ByteBuffer buf, int n) throws IOException {
-
-        buf.limit(buf.position() + n);
-        client.read(buf);
-        buf.position(buf.limit() - n);
+        int position = buf.position();
+        buf.limit(position + n);
+        int rn = client.read(buf);
+        buf.position(position);
     }
 
     private class TcpPipe implements Runnable {

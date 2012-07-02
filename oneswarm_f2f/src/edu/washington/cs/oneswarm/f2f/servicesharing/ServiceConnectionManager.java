@@ -33,11 +33,28 @@ public class ServiceConnectionManager implements ServiceChannelEndpointDelegate 
         return instance;
     }
 
-    // Both are lists are keyed on service key. 1 endpoint per overlay path, 1
-    // serviceconnection per local connection.
+    // Both lists are keyed by service id. One ServiceChannelEndpoint may exist
+    // for each friend connection, one ServiceConnection should exist for each
+    // active connection (client or sever).
     private final HashMap<Long, List<ServiceChannelEndpoint>> connections = new HashMap<Long, List<ServiceChannelEndpoint>>();
     private final HashMap<Long, List<ServiceConnection>> services = new HashMap<Long, List<ServiceConnection>>();
 
+    /**
+     * Create the ServiceChanelEndpoint associated with a given friend
+     * connection.
+     * 
+     * @param nextHop
+     *            The friend connection.
+     * @param search
+     *            The service Key.
+     * @param response
+     *            The remote response received through the given friend
+     *            connection.
+     * @param outgoing
+     *            True if this is a client connection.
+     * @return The service endpoint for communicating service data to this
+     *         friend.
+     */
     public ServiceChannelEndpoint createChannel(FriendConnection nextHop, OSF2FHashSearch search,
             OSF2FHashSearchResp response, boolean outgoing) {
         ServiceChannelEndpoint channel = new ServiceChannelEndpoint(nextHop, search,
@@ -53,6 +70,12 @@ public class ServiceConnectionManager implements ServiceChannelEndpointDelegate 
         return channel;
     }
 
+    /**
+     * Begin tracking a ServiceChannelEndpoint for connection attempts.
+     * 
+     * @param channel
+     *            The service channel endpoint to track.
+     */
     private void addChannel(ServiceChannelEndpoint channel) {
         logger.fine("Network Channel registered with Connection Manager");
         Long key = channel.getServiceKey();
@@ -80,6 +103,14 @@ public class ServiceConnectionManager implements ServiceChannelEndpointDelegate 
         this.services.put(key, service);
     }
 
+    /**
+     * Get the active oneswarm connections associated with a given service.
+     * 
+     * @param key
+     *            The service key.
+     * @return A collection of endpoints connected to the service identified by
+     *         key.
+     */
     public Collection<ServiceChannelEndpoint> getChannelsForService(long key) {
         return this.connections.get(Long.valueOf(key));
     }
@@ -120,6 +151,9 @@ public class ServiceConnectionManager implements ServiceChannelEndpointDelegate 
             logger.fine("New Flow Established over " + sender.getChannelId());
             long serviceKey = sender.getServiceKey();
             SharedService ss = ServiceSharingManager.getInstance().getSharedService(serviceKey);
+            if (ss == null) {
+                return false;
+            }
             List<ServiceConnection> existing = services.get(serviceKey);
             short subchannel = 0;
             if (existing == null) {

@@ -174,11 +174,15 @@ public class ServiceConnection implements ServiceChannelEndpointDelegate {
     public void close(String reason) {
         logger.info("Service Connection closed");
 
+        ChannelBufferInfo b = new ChannelBufferInfo();
+        List<ServiceChannelEndpoint> openChannels = getAvailableChannels(null, b);
+
         ServiceChannelEndpoint[] channels = this.networkChannels.toArray(new ServiceChannelEndpoint[0]);
         this.networkChannels.clear();
-        if (channels.length > 0) {
+        if (openChannels.size() > 0) {
             // Send RST Packet.
-            channels[0].writeMessage(mmt.nextMsg(), null, FEATURES.contains(ServiceFeatures.UDP));
+            openChannels.get(0).writeMessage(mmt.nextMsg(), null,
+                    FEATURES.contains(ServiceFeatures.UDP));
         }
         for (ServiceChannelEndpoint conn : channels) {
             conn.removeDelegate(this);
