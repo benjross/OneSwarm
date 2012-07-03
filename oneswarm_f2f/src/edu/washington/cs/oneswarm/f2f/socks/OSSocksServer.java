@@ -19,7 +19,7 @@ public class OSSocksServer implements Runnable {
     private static final int BUFFER_SIZE = 1024;
     private final int localPort;
     private ServerSocketChannel serverSocket;
-    private SocksCommandHandler.Interface handler;
+    private final SocksCommandHandler.Interface handler;
 
     public OSSocksServer(int localPort, SocksCommandHandler.Interface handler) {
         this.localPort = localPort;
@@ -51,7 +51,7 @@ public class OSSocksServer implements Runnable {
 
     private class OSSocksServerThread implements Runnable {
         private SocketChannel client;
-        private SocksCommandHandler.Interface handler;
+        private final SocksCommandHandler.Interface handler;
 
         private final int bufferSize;
         private ByteBuffer buf;
@@ -242,7 +242,9 @@ public class OSSocksServer implements Runnable {
         private void readNBytes(ByteBuffer buf, int n) throws IOException {
             int position = buf.position();
             buf.limit(position + n);
-            client.read(buf);
+            while (buf.position() < position + n) {
+                client.read(buf);
+            }
             buf.position(position);
         }
     }

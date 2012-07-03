@@ -104,7 +104,7 @@ public class ClientServiceConnectionTest extends OneSwarmTestBase {
                 tcpEndpoint.getConnectionEndpoint(), new OSF2FMessageEncoder(), decoder,
                 false, false, null);
 
-        clientConn = new ServiceConnection(true, (short) 0, netConn);
+        clientConn = new ServiceConnection(true, (short) 0, 0, netConn);
         friends = new ArrayList<FriendConnection>();
         QueueManager qMgr = new QueueManager();
         

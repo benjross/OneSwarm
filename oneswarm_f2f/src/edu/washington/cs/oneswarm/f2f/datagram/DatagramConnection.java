@@ -528,6 +528,10 @@ public class DatagramConnection extends DatagramRateLimiter {
                 logger.warning("tried to send too large datagram: " + messageSize);
                 return;
             }
+            if (messageSize < 0) {
+                logger.warning("tried to send invalid (negative length) datagram: " + messageSize);
+                return;
+            }
             queueLength += messageSize + OSF2FMessage.MESSAGE_HEADER_LEN;
             if (logger.isLoggable(Level.FINEST)) {
                 logger.finest("message queued, queue_length=" + queueLength);
@@ -558,6 +562,9 @@ public class DatagramConnection extends DatagramRateLimiter {
                             }
                             // This is going to get sent, update the queue size
                             queueLength -= messageSize + OSF2FMessage.MESSAGE_HEADER_LEN;
+                            if (queueLength < 0) {
+                                logger.warning("Datagram Queue Under-run, Accounting bug");
+                            }
                             // Check if we can fit more packets in there.
                         } while ((message = messageQueue.peek()) != null
                                 && datagramSize + message.getMessageSize() <= MAX_DATAGRAM_PAYLOAD_SIZE

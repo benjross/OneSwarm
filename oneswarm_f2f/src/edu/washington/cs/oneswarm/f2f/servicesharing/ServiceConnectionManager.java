@@ -90,8 +90,10 @@ public class ServiceConnectionManager implements ServiceChannelEndpointDelegate 
         channel.addDelegate(this, (short) -1);
         if (this.services.get(key).size() > 0) {
             for (ServiceConnection service : this.services.get(key)) {
-                logger.finest("Channel added to existing service: " + service.getDescription());
-                service.addChannel(channel);
+                if (service.getSearchKey() == channel.getSearchKey()) {
+                    logger.finest("Channel added to existing service: " + service.getDescription());
+                    service.addChannel(channel);
+                }
             }
         }
     }
@@ -160,7 +162,8 @@ public class ServiceConnectionManager implements ServiceChannelEndpointDelegate 
                 services.put(serviceKey, new ArrayList<ServiceConnection>());
             } else {
                 for (ServiceConnection c : existing) {
-                    if (c.subchannelId == msg.getSubchannel()) {
+                    if (c.subchannelId == msg.getSubchannel()
+                            && c.getSearchKey() == sender.getSearchKey()) {
                         // Ignore duplicate syn messages - the connection will
                         // handle it directly.
                         return false;
@@ -169,10 +172,13 @@ public class ServiceConnectionManager implements ServiceChannelEndpointDelegate 
                 subchannel = msg.getSubchannel();
             }
             NetworkConnection outgoingConnection = ss.createConnection();
-            ServiceConnection c = new ServiceConnection(false, subchannel, outgoingConnection);
+            ServiceConnection c = new ServiceConnection(false, subchannel, sender.getSearchKey(),
+                    outgoingConnection);
             this.services.get(serviceKey).add(c);
             for (ServiceChannelEndpoint channel : this.getChannelsForService(serviceKey)) {
-                c.addChannel(channel);
+                if (channel.getSearchKey() == sender.getSearchKey()) {
+                    c.addChannel(channel);
+                }
             }
             c.channelGotMessage(sender, msg);
             return true;
@@ -184,7 +190,8 @@ public class ServiceConnectionManager implements ServiceChannelEndpointDelegate 
                 for (ServiceConnection c : existing) {
                     // TODO(willscott): Also need check here to differentiate
                     // distinct clients.
-                    if (c.subchannelId == msg.getSubchannel()) {
+                    if (c.subchannelId == msg.getSubchannel()
+                            && c.getSearchKey() == sender.getSearchKey()) {
                         c.closeUponReading(msg.getSequenceNumber());
                         break;
                     }
@@ -201,17 +208,16 @@ public class ServiceConnectionManager implements ServiceChannelEndpointDelegate 
         Collection<ServiceChannelEndpoint> channels = this.getChannelsForService(serverSearchKey);
         if (channels != null && channels.size() > 0) {
             short subchannel = (short) services.get(serverSearchKey).size();
-            ServiceConnection c = new ServiceConnection(true, subchannel, incomingConnection);
+            long searchKey = channels.iterator().next().getSearchKey();
+            ServiceConnection c = new ServiceConnection(true, subchannel, searchKey,
+                    incomingConnection);
             for (ServiceChannelEndpoint channel : channels) {
                 c.addChannel(channel);
             }
             services.get(serverSearchKey).add(c);
-            logger.fine("Service requested - existing channel found. Search Skipped.");
+            logger.fine("Service requested - existing channel found. Accepted.");
             return true;
         } else {
-            registerKey(serverSearchKey);
-            ServiceConnection c = new ServiceConnection(true, (short)0, incomingConnection);
-            services.get(serverSearchKey).add(c);
             logger.fine("Service requested - existing channel not present. Search Needed.");
             return false;
         }

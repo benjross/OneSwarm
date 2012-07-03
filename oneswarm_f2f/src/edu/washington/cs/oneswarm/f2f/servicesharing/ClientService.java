@@ -2,6 +2,7 @@ package edu.washington.cs.oneswarm.f2f.servicesharing;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.gudy.azureus2.core3.config.COConfigurationManager;
 
@@ -81,6 +82,7 @@ public class ClientService implements RoutingListener, Comparable<ClientService>
         } else {
             if (!ServiceConnectionManager.getInstance().requestService(incomingConnection,
                     serverSearchKey)) {
+                final AtomicBoolean responded = new AtomicBoolean(false);
                 ServiceSharingManager.logger.finer("sending search to " + serverSearchKey);
                 SearchManager searchManager = OSF2FMain.getSingelton().getOverlayManager()
                     .getSearchManager();
@@ -91,6 +93,12 @@ public class ClientService implements RoutingListener, Comparable<ClientService>
                         OSF2FHashSearchResp msg) {
                         ServiceConnectionManager.getInstance()
                             .createChannel(source, search, msg, true);
+                        // Once a channel exists to associate with, we can
+                        // handle the external network connection.
+                        if (responded.getAndSet(true) == false) {
+                            ServiceConnectionManager.getInstance().requestService(
+                                    incomingConnection, serverSearchKey);
+                        }
                     // Limit number of multiplexed channels.
                     }
                 });

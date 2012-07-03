@@ -51,6 +51,7 @@ public class ServiceChannelEndpoint extends OverlayEndpoint {
     private long latency = 1000;
     private long minLatency = Long.MAX_VALUE;
     private final long serviceKey;
+    private final long searchKey;
 
     public ServiceChannelEndpoint(FriendConnection connection, OSF2FHashSearch search,
             OSF2FHashSearchResp response,
@@ -62,6 +63,7 @@ public class ServiceChannelEndpoint extends OverlayEndpoint {
         this.outstandingBytes = 0;
         this.delayedExecutor = DelayedExecutorService.getInstance().getVariableDelayExecutor();
         this.serviceKey = search.getInfohashhash();
+        this.searchKey = search.getSearchID();
 
         this.started = true;
         friendConnection.isReadyForWrite(new OverlayTransport.WriteQueueWaiter() {
@@ -186,6 +188,10 @@ public class ServiceChannelEndpoint extends OverlayEndpoint {
     
     public long getServiceKey() {
         return this.serviceKey;
+    }
+
+    public long getSearchKey() {
+        return this.searchKey;
     }
 
     public void writeMessage(final SequenceNumber num, DirectByteBuffer buffer, boolean datagram) {

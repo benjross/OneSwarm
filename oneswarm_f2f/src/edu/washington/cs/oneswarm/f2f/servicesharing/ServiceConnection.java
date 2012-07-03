@@ -59,8 +59,9 @@ public class ServiceConnection implements ServiceChannelEndpointDelegate {
     protected final short subchannelId;
     protected int serviceSequenceNumber;
     protected int windowSize = COConfigurationManager.getIntParameter("SERVICE_CLIENT_channels", 4);
+    private final long searchKey;
 
-    public ServiceConnection(boolean outgoing, short subchannel,
+    public ServiceConnection(boolean outgoing, short subchannel, long searchKey,
             final NetworkConnection serviceChannel) {
         this.serviceSequenceNumber = 0;
         this.isOutgoing = outgoing;
@@ -73,6 +74,7 @@ public class ServiceConnection implements ServiceChannelEndpointDelegate {
             connectServiceChannel();
         }
         this.mmt = new MessageStreamMultiplexer(subchannel);
+        this.searchKey = searchKey;
 
         // Load Configuration.
         ArrayList<ServiceFeatures> features = new ArrayList<ServiceFeatures>();
@@ -118,6 +120,10 @@ public class ServiceConnection implements ServiceChannelEndpointDelegate {
             connectServiceChannel();
         }
         return true;
+    }
+
+    public long getSearchKey() {
+        return this.searchKey;
     }
 
     private void connectServiceChannel() {
