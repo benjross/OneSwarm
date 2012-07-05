@@ -79,10 +79,11 @@ public class ServiceChannelEndpoint extends OverlayEndpoint {
     }
 
     public void addDelegate(ServiceChannelEndpointDelegate d, short flow) {
+        Short flowObj = new Short(flow);
         if (d.writesMessages()) {
-            this.delegateOrder.add(flow);
+            this.delegateOrder.add(flowObj);
         }
-        this.delegates.put(flow, d);
+        this.delegates.put(flowObj, d);
         if (friendConnection.isReadyForWrite(null)) {
             d.channelIsReady(this);
         }
@@ -196,12 +197,14 @@ public class ServiceChannelEndpoint extends OverlayEndpoint {
 
     public void writeMessage(final SequenceNumber num, DirectByteBuffer buffer, boolean datagram) {
         // Move the requester to the bottom of the priority list.
+        Short flowObj = new Short(num.getFlow());
         try {
-            this.delegateOrder.remove(num.getFlow());
+            this.delegateOrder.remove(flowObj);
         } catch (IndexOutOfBoundsException e) {
+            logger.warning("Unknown message sender:" + flowObj);
             return;
         }
-        this.delegateOrder.add(num.getFlow());
+        this.delegateOrder.add(flowObj);
 
         boolean rst = buffer == null;
         if (buffer == null) {

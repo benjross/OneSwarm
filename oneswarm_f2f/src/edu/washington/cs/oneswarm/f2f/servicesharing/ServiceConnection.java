@@ -178,7 +178,7 @@ public class ServiceConnection implements ServiceChannelEndpointDelegate {
     }
 
     public void close(String reason) {
-        logger.info("Service Connection closed");
+        logger.info("Service Connection closed: " + reason);
 
         ChannelBufferInfo b = new ChannelBufferInfo();
         List<ServiceChannelEndpoint> openChannels = getAvailableChannels(null, b);
