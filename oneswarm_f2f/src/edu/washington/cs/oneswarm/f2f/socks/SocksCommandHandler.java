@@ -85,7 +85,7 @@ public class SocksCommandHandler {
 
                 NetworkConnection nc = new NetworkConnectionImpl(transport, encoder, decoder);
                 ServiceConnectionManager.getInstance().requestService(nc, server.getId());
-                return server.getIpAddr();
+                return ArrayUtils.addAll(server.getIpAddr(), new byte[]{0,0});
             default:
                 throw new SocksException(SocksConstants.Status.COMMAND_NOT_SUPPORTED);
             }
