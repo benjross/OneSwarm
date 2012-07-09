@@ -1,5 +1,6 @@
 package edu.washington.cs.oneswarm.f2f.servicesharing;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,7 +18,9 @@ import com.aelitis.azureus.core.networkmanager.IncomingMessageQueue.MessageQueue
 import com.aelitis.azureus.core.networkmanager.NetworkConnection;
 import com.aelitis.azureus.core.networkmanager.NetworkConnection.ConnectionListener;
 import com.aelitis.azureus.core.networkmanager.NetworkManager;
+import com.aelitis.azureus.core.networkmanager.Transport;
 import com.aelitis.azureus.core.networkmanager.impl.RateHandler;
+import com.aelitis.azureus.core.networkmanager.impl.tcp.TCPTransportImpl;
 import com.aelitis.azureus.core.peermanager.messaging.Message;
 
 import edu.washington.cs.oneswarm.f2f.network.LowLatencyMessageWriter;
@@ -53,8 +56,10 @@ public class ServiceConnection implements ServiceChannelEndpointDelegate {
     protected final DirectByteBuffer[] bufferedServiceMessages = new DirectByteBuffer[SERVICE_MSG_BUFFER_SIZE];
     protected final List<ServiceChannelEndpoint> networkChannels = Collections
             .synchronizedList(new ArrayList<ServiceChannelEndpoint>());
+    protected boolean networkChannelEOF;
     protected final NetworkConnection serviceChannel;
     protected boolean serviceChannelConnected;
+    protected boolean serviceChannelEOF;
     protected final boolean isOutgoing;
     protected final short subchannelId;
     protected int serviceSequenceNumber;
@@ -64,10 +69,12 @@ public class ServiceConnection implements ServiceChannelEndpointDelegate {
     public ServiceConnection(boolean outgoing, short subchannel, long searchKey,
             final NetworkConnection serviceChannel) {
         this.serviceSequenceNumber = 0;
+        this.networkChannelEOF = false;
         this.isOutgoing = outgoing;
         this.subchannelId = subchannel;
         this.serviceChannel = serviceChannel;
         this.serviceChannelConnected = serviceChannel.isConnected();
+        this.serviceChannelEOF = false;
         if (this.serviceChannelConnected) {
             logger.info("Service connection created to pre-connected service channel.");
             // Add our connection listener.
@@ -158,7 +165,21 @@ public class ServiceConnection implements ServiceChannelEndpointDelegate {
 
             @Override
             public void exceptionThrown(Throwable error) {
-                ServiceConnection.this.close("Exception from Service channel:" + error.getMessage());
+                if (error.getMessage().indexOf("end of stream on socket read") != -1) {
+                    // End of input stream will be communicated as 0 length
+                    // message - but we shouldn't close.
+                    if (networkChannelEOF) {
+                        ServiceConnection.this.close("End of Service stream.");
+                    }
+                    if (!serviceChannelEOF) {
+                        serviceChannelEOF = true;
+                        ServiceConnection.this.routeMessageToChannel(
+                            new DirectByteBuffer(ByteBuffer.allocate(0)), null);
+                    }
+                } else {
+                    ServiceConnection.this.close("Exception from Service channel:"
+                            + error.getMessage());
+                }
             }
 
             @Override
@@ -185,7 +206,7 @@ public class ServiceConnection implements ServiceChannelEndpointDelegate {
 
         ServiceChannelEndpoint[] channels = this.networkChannels.toArray(new ServiceChannelEndpoint[0]);
         this.networkChannels.clear();
-        if (openChannels.size() > 0) {
+        if (openChannels.size() > 0 && !networkChannelEOF) {
             // Send RST Packet.
             openChannels.get(0).writeMessage(mmt.nextMsg(), null,
                     FEATURES.contains(ServiceFeatures.UDP));
@@ -214,6 +235,9 @@ public class ServiceConnection implements ServiceChannelEndpointDelegate {
                 // Throw out to prevent buffer overflow.
                 logger.warning("RST message dropped, exceeded message buffer.");
             } else {
+                // Mark service channel as done, since RST implies no more
+                // messages can be sent.
+                this.serviceChannelEOF = true;
                 bufferedServiceMessages[sequenceNumber & (SERVICE_MSG_BUFFER_SIZE - 1)] = new DirectByteBuffer(
                         ByteBuffer.allocate(0));
             }
@@ -311,11 +335,7 @@ public class ServiceConnection implements ServiceChannelEndpointDelegate {
                 return true;
             } else {
                 DirectByteBuffer payload = msg.transferPayload();
-                if (payload.remaining(ss) > 0) {
-                    bufferedServiceMessages[msg.getSequenceNumber() & (SERVICE_MSG_BUFFER_SIZE - 1)] = payload;
-                } else {
-                    logger.info("Received 0 length message.  Dropped.");
-                }
+                bufferedServiceMessages[msg.getSequenceNumber() & (SERVICE_MSG_BUFFER_SIZE - 1)] = payload;
             }
         }
         flushServiceQueue();
@@ -333,9 +353,38 @@ public class ServiceConnection implements ServiceChannelEndpointDelegate {
                 DirectByteBuffer buf = bufferedServiceMessages[serviceSequenceNumber
                         & (SERVICE_MSG_BUFFER_SIZE - 1)];
                 if (buf.remaining(ss) == 0) {
-                    this.close("Reached end of stream.");
+                    if (!networkChannelEOF) {
+                        networkChannelEOF = true;
+                        logger.fine("Writing EOF to service");
+                        Transport t = serviceChannel.getTransport();
+                        if (t.isTCP()) {
+                            TCPTransportImpl tcpTransport = (TCPTransportImpl) t;
+                            try {
+                                tcpTransport.getSocketChannel().socket().getOutputStream().close();
+                            } catch (IOException e) {
+                                logger.warning("Could not close outbound service connection.");
+                            }
+                        }
+                    }
+                    if (serviceChannelEOF) {
+                        this.close("Reached end of stream.");
+                        return;
+                    }
                     return;
                 }
+                /*
+                 * int pos = buf.position((byte) 0);
+                 * int len = buf.remaining((byte) 0);
+                 * byte[] temp = new byte[len];
+                 * buf.get((byte) 0, temp);
+                 * for (int i = 0; i < len; i++) {
+                 * if (temp[i] == 0) {
+                 * temp[i] = (byte) 0xff;
+                 * }
+                 * }
+                 * System.out.println("!!!MSG to Service: " + new String(temp));
+                 * buf.position((byte) 0, pos);
+                 */
                 DataMessage outgoing = new DataMessage(buf);
                 if (logger.isLoggable(Level.FINEST)) {
                     logger.finest("writing message to service queue: " + outgoing.getDescription());
