@@ -219,6 +219,15 @@ public class ServiceChannelEndpoint extends OverlayEndpoint {
     }
 
     private void writeMessage(sentMessage msg) {
+        if (msg.attempt > 10) {
+            logger.warning("Closing stream - message sent too many times without acknowledgement.");
+            ServiceChannelEndpointDelegate d = this.delegates.get(new Short(msg.num.getFlow()));
+            if (d != null) {
+                d.channelDidClose(this);
+            }
+            return;
+        }
+
         SequenceNumber num = msg.num;
         synchronized (sentMessages) {
             this.sentMessages.put(num, msg);

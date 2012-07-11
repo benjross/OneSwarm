@@ -168,8 +168,8 @@ public class DatagramConnection extends DatagramRateLimiter {
         this.remoteIp = friendConnection.getRemoteIp();
         this.decryptBuffer = ByteBuffer.allocateDirect(MAX_DATAGRAM_SIZE);
 
-        sendThread = new DatagramSendThread();
-        sendThread.start();
+        this.sendThread = new DatagramSendThread();
+        this.sendThread.start();
     }
 
     public void close() {
@@ -503,7 +503,7 @@ public class DatagramConnection extends DatagramRateLimiter {
         private final byte[] outgoingPacketBuf = new byte[2048];
         private volatile boolean quit = false;
 
-        private volatile int queueLength = 0;
+        private int queueLength = 0;
 
         public DatagramSendThread() {
             messageQueue = new LinkedBlockingQueue<OSF2FMessage>(1024);
@@ -519,7 +519,9 @@ public class DatagramConnection extends DatagramRateLimiter {
         }
 
         public void start() {
-            thread.start();
+            if (DatagramConnection.this.sendThread == this) {
+                thread.start();
+            }
         }
 
         public void queueMessage(OSF2FMessage message) throws InterruptedException {
@@ -532,11 +534,17 @@ public class DatagramConnection extends DatagramRateLimiter {
                 logger.warning("tried to send invalid (negative length) datagram: " + messageSize);
                 return;
             }
+
             queueLength += messageSize + OSF2FMessage.MESSAGE_HEADER_LEN;
             if (logger.isLoggable(Level.FINEST)) {
                 logger.finest("message queued, queue_length=" + queueLength);
             }
-            messageQueue.put(message);
+            try {
+                messageQueue.put(message);
+            } catch (InterruptedException e) {
+                queueLength -= messageSize + OSF2FMessage.MESSAGE_HEADER_LEN;
+                throw e;
+            }
         }
 
         @Override
@@ -548,27 +556,32 @@ public class DatagramConnection extends DatagramRateLimiter {
                 while (!quit) {
                     int datagramSize = 0;
                     int packetNum = 0;
-                    OSF2FMessage message = messageQueue.take();
+                    while (true) {
+                        OSF2FMessage message;
+                        int messageSize;
+                        message = messageQueue.take();
+                        messageSize = message.getMessageSize();
+                        queueLength -= messageSize + OSF2FMessage.MESSAGE_HEADER_LEN;
+                        datagramSize += messageSize + OSF2FMessage.MESSAGE_HEADER_LEN;
+                        messageBuffer[packetNum++] = OSF2FMessageFactory
+                                .createOSF2FRawMessage(message);
+                        if (logger.isLoggable(Level.FINEST)) {
+                            logger.finest(String.format(
+                                    "Adding message, packets=%d, size=%d message=%s", packetNum,
+                                    datagramSize, message.getDescription()));
+                        }
+                        if (queueLength < 0) {
+                            logger.warning("Datagram Queue underrun, accounting bug!");
+                        }
+                        synchronized (encrypter) {
+                            OSF2FMessage nextMessage = messageQueue.peek();
+                            if (nextMessage == null
+                                    || datagramSize + nextMessage.getMessageSize() > MAX_DATAGRAM_PAYLOAD_SIZE) {
+                                break;
+                            }
+                        }
+                    }
                     synchronized (encrypter) {
-                        do {
-                            final int messageSize = message.getMessageSize();
-                            datagramSize += messageSize + OSF2FMessage.MESSAGE_HEADER_LEN;
-                            messageBuffer[packetNum++] = OSF2FMessageFactory
-                                    .createOSF2FRawMessage(message);
-                            if (logger.isLoggable(Level.FINEST)) {
-                                logger.finest(String.format(
-                                        "Adding message, packets=%d, size=%d message=%s",
-                                        packetNum, datagramSize, message.getDescription()));
-                            }
-                            // This is going to get sent, update the queue size
-                            queueLength -= messageSize + OSF2FMessage.MESSAGE_HEADER_LEN;
-                            if (queueLength < 0) {
-                                logger.warning("Datagram Queue Under-run, Accounting bug");
-                            }
-                            // Check if we can fit more packets in there.
-                        } while ((message = messageQueue.peek()) != null
-                                && datagramSize + message.getMessageSize() <= MAX_DATAGRAM_PAYLOAD_SIZE
-                                && (message = messageQueue.remove()) != null);
                         sendMessage(messageBuffer, packetNum);
 
                         // If we merged packets we can reuse the saved bytes.
