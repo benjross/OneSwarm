@@ -31,6 +31,10 @@ public class ExitNodeInfo implements Comparable<ExitNodeInfo> {
         this.onlineSince = lastOutage;
         this.version = version;
     }
+    
+    public static ExitNodeInfo getEmpty() {
+        return new ExitNodeInfo("",0,0,null,new Date(),"");
+    }
 
     /**
      * Sets the exit policy of the server using Tor's notation.

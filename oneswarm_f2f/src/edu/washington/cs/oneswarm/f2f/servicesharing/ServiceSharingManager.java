@@ -52,6 +52,8 @@ public class ServiceSharingManager {
     public HashMap<Long, ClientService> clientServices = new HashMap<Long, ClientService>();
 
     public HashMap<Long, SharedService> sharedServices = new HashMap<Long, SharedService>();
+    
+    public ExitNodeInfo userExitPolicy;
 
     private ServiceSharingManager() {
     }
