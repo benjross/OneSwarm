@@ -2280,7 +2280,7 @@ public class FriendConnection implements DatagramListener {
         private final OSF2FSearch sourceMessage;
         private final OSF2FSearchResp setupMessage;
         private final long startTime;
-        private boolean service;
+        private boolean service = false;
 
         public OverlayForward(int channelId, FriendConnection conn, OSF2FSearch sourceMessage,
                 OSF2FSearchResp setup, boolean searcherSide) {

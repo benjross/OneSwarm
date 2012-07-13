@@ -399,7 +399,7 @@ public class DatagramConnectionTest extends OneSwarmTestBase {
                 || !((DatagramRateLimitedChannelQueue) conn1.queues.get(0)).isEmpty()) {
             Thread.sleep(10);
         }
-        while (conn1.sendThread.messageQueue.peek() != null) {
+        while (!conn1.sendThread.messageQueue.isEmpty()) {
             Thread.sleep(10);
         }
         System.out.println(String.format("done: time=%.2fs speed=%.2fMB/s ,%.2fkpps", elapsed, mb

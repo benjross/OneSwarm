@@ -11,8 +11,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -498,7 +498,7 @@ public class DatagramConnection extends DatagramRateLimiter {
         private final ByteBuffer[] unencryptedPayload;
 
         // Visible for testing.
-        final LinkedBlockingQueue<OSF2FMessage> messageQueue;
+        final List<OSF2FMessage> messageQueue;
         private final Thread thread;
         private final byte[] outgoingPacketBuf = new byte[2048];
         private volatile boolean quit = false;
@@ -506,7 +506,7 @@ public class DatagramConnection extends DatagramRateLimiter {
         private int queueLength = 0;
 
         public DatagramSendThread() {
-            messageQueue = new LinkedBlockingQueue<OSF2FMessage>(1024);
+            messageQueue = java.util.Collections.synchronizedList(new LinkedList<OSF2FMessage>());
             thread = new Thread(this);
             thread.setName("DatagramSendThread-" + DatagramConnection.this.toString());
             thread.setDaemon(true);
@@ -535,15 +535,13 @@ public class DatagramConnection extends DatagramRateLimiter {
                 return;
             }
 
-            queueLength += messageSize + OSF2FMessage.MESSAGE_HEADER_LEN;
-            if (logger.isLoggable(Level.FINEST)) {
-                logger.finest("message queued, queue_length=" + queueLength);
-            }
-            try {
-                messageQueue.put(message);
-            } catch (InterruptedException e) {
-                queueLength -= messageSize + OSF2FMessage.MESSAGE_HEADER_LEN;
-                throw e;
+            synchronized (messageQueue) {
+                queueLength += messageSize + OSF2FMessage.MESSAGE_HEADER_LEN;
+                if (logger.isLoggable(Level.FINEST)) {
+                    logger.finest("message queued, queue_length=" + queueLength);
+                }
+                messageQueue.add(message);
+                messageQueue.notify();
             }
         }
 
@@ -559,9 +557,14 @@ public class DatagramConnection extends DatagramRateLimiter {
                     while (true) {
                         OSF2FMessage message;
                         int messageSize;
-                        message = messageQueue.take();
-                        messageSize = message.getMessageSize();
-                        queueLength -= messageSize + OSF2FMessage.MESSAGE_HEADER_LEN;
+                        synchronized (messageQueue) {
+                            if (messageQueue.isEmpty()) {
+                                messageQueue.wait();
+                            }
+                            message = messageQueue.remove(0);
+                            messageSize = message.getMessageSize();
+                            queueLength -= messageSize + OSF2FMessage.MESSAGE_HEADER_LEN;
+                        }
                         datagramSize += messageSize + OSF2FMessage.MESSAGE_HEADER_LEN;
                         messageBuffer[packetNum++] = OSF2FMessageFactory
                                 .createOSF2FRawMessage(message);
@@ -573,10 +576,9 @@ public class DatagramConnection extends DatagramRateLimiter {
                         if (queueLength < 0) {
                             logger.warning("Datagram Queue underrun, accounting bug!");
                         }
-                        synchronized (encrypter) {
-                            OSF2FMessage nextMessage = messageQueue.peek();
-                            if (nextMessage == null
-                                    || datagramSize + nextMessage.getMessageSize() > MAX_DATAGRAM_PAYLOAD_SIZE) {
+                        synchronized (messageQueue) {
+                            if (messageQueue.isEmpty()
+                                    || messageQueue.get(0).getMessageSize() + datagramSize > MAX_DATAGRAM_PAYLOAD_SIZE) {
                                 break;
                             }
                         }
@@ -595,9 +597,10 @@ public class DatagramConnection extends DatagramRateLimiter {
                 }
             } catch (InterruptedException e) {
                 logger.fine("Datagram send thread closed: " + DatagramConnection.this.toString());
-                OSF2FMessage message;
-                while ((message = messageQueue.poll()) != null) {
-                    message.destroy();
+                synchronized (messageQueue) {
+                    while (!messageQueue.isEmpty()) {
+                        messageQueue.get(0).destroy();
+                    }
                 }
             }
         }

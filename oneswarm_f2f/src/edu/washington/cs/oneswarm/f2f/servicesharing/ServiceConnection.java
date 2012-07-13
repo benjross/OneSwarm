@@ -165,16 +165,21 @@ public class ServiceConnection implements ServiceChannelEndpointDelegate {
 
             @Override
             public void exceptionThrown(Throwable error) {
-                if (error.getMessage().indexOf("end of stream on socket read") != -1) {
+                if (error != null && error.getMessage() != null
+                        && error.getMessage().indexOf("end of stream on socket read") != -1) {
                     // End of input stream will be communicated as 0 length
                     // message - but we shouldn't close.
                     if (networkChannelEOF) {
                         ServiceConnection.this.close("End of Service stream.");
                     }
                     if (!serviceChannelEOF) {
+                        logger.info("End of service channel input stream.");
                         serviceChannelEOF = true;
                         ServiceConnection.this.routeMessageToChannel(
                             new DirectByteBuffer(ByteBuffer.allocate(0)), null);
+                    }
+                    if (!serviceChannel.isConnected()) {
+                        ServiceConnection.this.close("Service Channel Closed");
                     }
                 } else {
                     ServiceConnection.this.close("Exception from Service channel:"
@@ -309,8 +314,11 @@ public class ServiceConnection implements ServiceChannelEndpointDelegate {
 
     @Override
     public void channelDidConnect(ServiceChannelEndpoint sender) {
-        // TODO Auto-generated method stub
-
+        if (serviceChannel.isConnected()) {
+            NetworkManager.getSingleton().downgradeTransferProcessing(serviceChannel);
+            NetworkManager.getSingleton().upgradeTransferProcessing(serviceChannel,
+                    new ServiceRateHandler(ServiceConnection.this));
+        }
     }
 
     @Override
