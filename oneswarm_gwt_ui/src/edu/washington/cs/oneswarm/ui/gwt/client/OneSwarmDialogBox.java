@@ -3,9 +3,6 @@ package edu.washington.cs.oneswarm.ui.gwt.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.event.dom.client.MouseMoveEvent;
-import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -21,6 +18,8 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import edu.washington.cs.oneswarm.ui.gwt.client.i18n.OSMessages;
+import edu.washington.cs.oneswarm.ui.gwt.client.newui.ImageConstants;
+import edu.washington.cs.oneswarm.ui.gwt.client.newui.OneSwarmCss;
 
 /**
  * A form of popup that has a caption area at the top and can be dragged by the
@@ -39,10 +38,9 @@ import edu.washington.cs.oneswarm.ui.gwt.client.i18n.OSMessages;
  * </p>
  */
 public class OneSwarmDialogBox extends PopupPanel implements HasHTML, ClickHandler, MouseListener {
-
-    public static final String CSS_DIALOG_HEADER = "os-dialog_header";
-
-    public final static String CLOSE_IMAGE_URL = GWT.getModuleBaseURL() + "images/close.png";
+    public static final String CSS_DIALOG_HEADER = OneSwarmCss.CSS_DIALOG_HEADER;
+    public final static String CLOSE_IMAGE_URL = GWT.getModuleBaseURL() + ImageConstants.ICON_CLOSE_BUTTON;
+    
     protected static OSMessages msg = OneSwarmGWT.msg;
 
     private Image closeImage = null;

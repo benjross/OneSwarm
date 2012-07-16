@@ -21,6 +21,7 @@ import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Cookies;
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.DisclosurePanel;
@@ -84,19 +85,6 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
 
     public FriendListPanel() {
         super();
-        // try {
-        // if (Cookies.getCookie(COOKIE_SHOW_OFFLINE_FRIENDS) == null) {
-        // showDisconnected = true;
-        // Cookies.setCookie(COOKIE_SHOW_OFFLINE_FRIENDS, "1");
-        // } else if( Cookies.getCookie(COOKIE_SHOW_OFFLINE_FRIENDS).equals("1")
-        // ) {
-        // showDisconnected = true;
-        // } else {
-        // showDisconnected = false;
-        // }
-        // } catch (Exception e) {
-        // showDisconnected = true;
-        // }
 
         showDisconnected = false;
 
@@ -265,7 +253,6 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
         if (mSelectedFriend != null) {
             mSelectedFriend.clearSelected();
         }
-        mSelectedFriend = null;
     }
 
     public FriendInfoLite getSelectedFriend() {
@@ -399,12 +386,10 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
                     if (f.getStatus() == FriendInfoLite.STATUS_ONLINE) {
                         mSelectedFriend.clearSelected();
                         p.setSelected();
-                        mSelectedFriend = p;
                     } else {
                         // selected friend went offline
                         p.clearSelected();
                         mSelectedFriend = null;
-                        EntireUIRoot.getRoot(this).friendFilterChanged();
                     }
                 } else {
                     p.clearSelected();
@@ -442,8 +427,6 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
                 if (f.equals(getSelectedFriend())) {
                     if (f.getStatus() == FriendInfoLite.STATUS_ONLINE) {
                         p.setSelected();
-                        mSelectedFriend = p;
-
                     } else {
                         // selected friend went offline
                         p.clearSelected();
@@ -583,9 +566,10 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
                     if (mSelectedFriend != null) {
                         mSelectedFriend.clearSelected();
                     }
-                    mSelectedFriend = FriendPanel.this;
+                    History.newItem("friend-" + FriendListPanel.this.getSelectedFriend().getId());
                     setSelected();
-                    EntireUIRoot.getRoot(FriendListPanel.this).friendFilterChanged();
+                    
+                    mSelectedFriend = FriendPanel.this;
                     OneSwarmGWT.log("selected friend conn id: " + friendInfoLite.getConnectionId());
                 } else if ((System.currentTimeMillis() - lastClick) < SwarmsBrowser.DOUBLE_CLICK_THRESHOLD) {
                     EntireUIRoot.getRoot(FriendListPanel.this).startChat(friendInfoLite);
@@ -751,18 +735,20 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
         }
 
         public void setSelected() {
-            if (!isSelected) {
+
+            EntireUIRoot.getRoot(FriendListPanel.this).clearSidebarSelection();
+            if (mSelectedFriend != this) {
+                mSelectedFriend = this;
                 FriendPanel.this.addStyleName(CSS_FRIEND_HIGHLIGHTED);
             }
             isSelected = true;
         }
 
         public void clearSelected() {
-            if (isSelected) {
+            if (mSelectedFriend == this) {
+                mSelectedFriend = null;
                 FriendPanel.this.removeStyleName(CSS_FRIEND_HIGHLIGHTED);
-                super.setFocus(false);
             }
-            isSelected = false;
         }
 
         public FriendInfoLite getFriendInfo() {

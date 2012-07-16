@@ -1,6 +1,8 @@
 package edu.washington.cs.oneswarm.ui.gwt.client.newui;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -21,15 +23,13 @@ import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmRPCClient;
 import edu.washington.cs.oneswarm.ui.gwt.client.Updateable;
 import edu.washington.cs.oneswarm.ui.gwt.client.i18n.OSMessages;
 import edu.washington.cs.oneswarm.ui.gwt.client.newui.friends.FriendsSidePanel;
+import edu.washington.cs.oneswarm.ui.gwt.client.newui.sharedservices.SharedServicesSidePanel;
 import edu.washington.cs.oneswarm.ui.gwt.rpc.StringTools;
 
-public class NavigationSidePanel extends VerticalPanel implements Updateable {
+public class NavigationSidePanel extends VerticalPanel implements SidebarWidget {
     private static OSMessages msg = OneSwarmGWT.msg;
 
     private static final String CSS_NAV = "os-navpanel";
-
-    private static final String CSS_NAV_BUTTON = "os-navpanel_button_label";
-    private static final String CSS_NAV_ICON = "os-navpanel_icon";
 
     private static final String CSS_NAV_CORNER = "os-categoryLinkCorners";
     private static final String CSS_NAV_CORNER_SELECTED = "os-categoryLinkCorners-selected";
@@ -58,8 +58,12 @@ public class NavigationSidePanel extends VerticalPanel implements Updateable {
 
     private final FriendsSidePanel mFriendPanel;
     private final CommunityServersSidePanel mCommunityServers;
+    private final SharedServicesSidePanel mSharedServices;
+
+    private List<SidebarWidget> clearList;
 
     public NavigationSidePanel() {
+        clearList = new LinkedList<SidebarWidget>();
         addStyleName(CSS_NAV);
 
         unreadChatHTML.addClickHandler(new ClickHandler() {
@@ -92,12 +96,21 @@ public class NavigationSidePanel extends VerticalPanel implements Updateable {
 
         mCommunityServers = new CommunityServersSidePanel();
         mFriendPanel = new FriendsSidePanel();
+        mSharedServices = new SharedServicesSidePanel();
 
         add(mCommunityServers);
         add(mFriendPanel);
+        add(mSharedServices);
 
         setCellHorizontalAlignment(mCommunityServers, HorizontalPanel.ALIGN_LEFT);
         setCellHorizontalAlignment(mFriendPanel, HorizontalPanel.ALIGN_LEFT);
+        setCellHorizontalAlignment(mSharedServices, HorizontalPanel.ALIGN_LEFT);
+    }
+
+    public void add(Widget w) {
+            if (w instanceof SidebarWidget)
+                clearList.add((SidebarWidget) w);
+            super.add(w);
     }
 
     public FriendsSidePanel getFriendPanel() {
@@ -127,6 +140,9 @@ public class NavigationSidePanel extends VerticalPanel implements Updateable {
         if (mSelectedRP != null) {
             mSelectedRP.setCornerStyleName(CSS_NAV_CORNER);
         }
+
+        for (SidebarWidget sp : clearList)
+            sp.clearSelection();
 
     }
 
@@ -173,6 +189,7 @@ public class NavigationSidePanel extends VerticalPanel implements Updateable {
          */
         ClickHandler nav_click_listener = new ClickHandler() {
             public void onClick(ClickEvent event) {
+                EntireUIRoot.getRoot(NavigationSidePanel.this).clearSidebarSelection();
                 mSelectedRP.setCornerStyleName(CSS_NAV_CORNER);
                 mSelectedHP.setStyleName(CSS_NAV_LINK);
 
@@ -191,7 +208,6 @@ public class NavigationSidePanel extends VerticalPanel implements Updateable {
                 {
                     root.pageZero();
                 }
-                EntireUIRoot.getRoot(NavigationSidePanel.this).clearNonLocalSelections();
 
                 // TODO: we messed up adding history listeners early on, so we
                 // need to invoke this manually. fix at some point

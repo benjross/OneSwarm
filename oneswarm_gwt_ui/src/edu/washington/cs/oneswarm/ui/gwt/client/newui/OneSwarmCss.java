@@ -7,4 +7,6 @@ public class OneSwarmCss {
     public static final String TEXT_BOLD = "os-bold";
     public static final String TEXT_BLACK = "os-text_color_black";
     public static final String CSS_NOTHING_SHOWING = "os-no_files_label";
+    public static final String CSS_INVALID_FORM_ENTRY = "os-invalid_form_entry";
+    public static final String CSS_DIALOG_HEADER = "os-dialog_header";
 }

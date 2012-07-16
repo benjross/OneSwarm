@@ -802,6 +802,10 @@ os-friendPanel {
 	font-weight: bold;
 }
 
+.os-invalid_form_entry {
+	border: 2px solid red;
+}
+
 /* GWT File Browser */
 .fileBrowserPopup {
 	z-index: 2000 !important;

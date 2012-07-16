@@ -661,22 +661,17 @@ public class EntireUIRoot extends DockPanel {
                 .getSelectedFriend();
         if (selectedFriend != null) {
             navSidePanel.clearSelection();
-            navSidePanel.getCommunityServersPanel().clearSelectedServer();
-            History.newItem("friend-" + selectedFriend.getId());
-
         } else {
             // TODO: we should set the active filter to all files
         }
     }
 
-    public void serverFilterChanged() {
-        CommunityRecord selectedServer = navSidePanel.getCommunityServersPanel()
-                .getSelectedServer();
-        if (selectedServer != null) {
+    public void clearSidebarSelection() {
             navSidePanel.clearSelection();
+/*
             navSidePanel.getFriendPanel().getFriendListPanel().clearSelectedFriend();
-            History.newItem("cserver-" + selectedServer.getBaseURL().hashCode());
-        }
+            navSidePanel.getCommunityServersPanel().clearSelectedServer();
+            navSidePanel.get*/
     }
 
     /**
@@ -684,11 +679,6 @@ public class EntireUIRoot extends DockPanel {
      */
     public FriendInfoLite getSelectedFriend() {
         return navSidePanel.getFriendPanel().getFriendListPanel().getSelectedFriend();
-    }
-
-    public void clearNonLocalSelections() {
-        navSidePanel.getFriendPanel().getFriendListPanel().clearSelectedFriend();
-        navSidePanel.getCommunityServersPanel().clearSelectedServer();
     }
 
     public void pageZero() {
