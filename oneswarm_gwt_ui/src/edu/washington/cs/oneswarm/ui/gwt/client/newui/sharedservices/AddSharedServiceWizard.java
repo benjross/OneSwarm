@@ -27,16 +27,16 @@ public class AddSharedServiceWizard extends OneSwarmDialogBox {
         VerticalPanel p = new VerticalPanel();
 
         Label selectLabel = new Label(msg.shared_services_dialog_hint());
-        selectLabel.addStyleName(CSS_DIALOG_HEADER);
+        selectLabel.addStyleName(OneSwarmCss.Dialog.HEADER);
         selectLabel.setWidth(WIDTH + "px");
         p.add(selectLabel);
         p.setCellVerticalAlignment(selectLabel, VerticalPanel.ALIGN_TOP);
         p.setWidth("100%");
 
         final TextArea serviceId = new TextArea();
-        p.add(new InputPanel(WIDTH - 10, "Service ID:", serviceId));
+        p.add(new InputPanel(WIDTH - 10, msg.shared_services_dialog_service_id(), serviceId));
         final TextBox serviceName = new TextBox();
-        p.add(new InputPanel(WIDTH - 10, "Nickname", serviceName));
+        p.add(new InputPanel(WIDTH - 10, msg.shared_services_dialog_service_name(), serviceName));
 
         HorizontalPanel buttonPanel = new HorizontalPanel();
         buttonPanel.setSpacing(5);

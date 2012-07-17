@@ -10,7 +10,6 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.DisclosurePanel;
-import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -18,25 +17,18 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 
 import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmDialogBox;
 import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmGWT;
 import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmRPCClient;
 import edu.washington.cs.oneswarm.ui.gwt.client.ReportableErrorDialogBox;
-import edu.washington.cs.oneswarm.ui.gwt.client.Updateable;
 import edu.washington.cs.oneswarm.ui.gwt.client.i18n.OSMessages;
 import edu.washington.cs.oneswarm.ui.gwt.client.newui.EntireUIRoot;
 import edu.washington.cs.oneswarm.ui.gwt.client.newui.ImageConstants;
 import edu.washington.cs.oneswarm.ui.gwt.client.newui.OneSwarmCss;
 import edu.washington.cs.oneswarm.ui.gwt.client.newui.SidebarWidget;
-import edu.washington.cs.oneswarm.ui.gwt.client.newui.SwarmsBrowser;
-import edu.washington.cs.oneswarm.ui.gwt.client.newui.friends.FriendListPanel;
-import edu.washington.cs.oneswarm.ui.gwt.client.newui.friends.wizard.FriendsImportWizard;
 import edu.washington.cs.oneswarm.ui.gwt.client.newui.sharedservices.AddSharedServiceWizard.AddSharedServiceCallback;
-import edu.washington.cs.oneswarm.ui.gwt.rpc.OneSwarmConstants;
 import edu.washington.cs.oneswarm.ui.gwt.rpc.OneSwarmException;
-import edu.washington.cs.oneswarm.ui.gwt.rpc.OneSwarmUIService;
 import edu.washington.cs.oneswarm.ui.gwt.rpc.ClientServiceInfo;
 
 public class SharedServicesSidePanel extends VerticalPanel implements SidebarWidget {
@@ -55,12 +47,12 @@ public class SharedServicesSidePanel extends VerticalPanel implements SidebarWid
         serviceList.setWidth("100%");
 
         disclosurePanel.setOpen(true);
-        disclosurePanel.addStyleName("os-friendList");
+        disclosurePanel.addStyleName(OneSwarmCss.SidebarWidget.DISCLOSURE_PANEL);
 
-        MenuBar footerMenu = new MenuBar();
-        footerMenu.addStyleName("os-friendListFooter");
-        footerMenu.setWidth("100%");
-        MenuItem addFriendItem = new MenuItem(msg.shared_services_add_link(), new Command() {
+        MenuBar footer = new MenuBar();
+        footer.addStyleName(OneSwarmCss.SidebarWidget.FOOTER);
+        footer.setWidth("100%");
+        MenuItem addServiceLink = new MenuItem(msg.shared_services_add_link(), new Command() {
             public void execute() {
                 final OneSwarmDialogBox dlg = new AddSharedServiceWizard(
                         new AddSharedServiceCallback() {
@@ -85,13 +77,12 @@ public class SharedServicesSidePanel extends VerticalPanel implements SidebarWid
             }
         });
 
-        addFriendItem.setStylePrimaryName("os-friendListFooterMenu");
-        footerMenu.addItem(addFriendItem);
-        addFriendItem.getElement().setId("addFriendItemLink");
+        addServiceLink.setStylePrimaryName(OneSwarmCss.SidebarWidget.LINK);
+        footer.addItem(addServiceLink);
 
         contentPanel.add(serviceList);
-        contentPanel.add(footerMenu);
-        contentPanel.setCellHorizontalAlignment(footerMenu, HorizontalPanel.ALIGN_CENTER);
+        contentPanel.add(footer);
+        contentPanel.setCellHorizontalAlignment(footer, ALIGN_CENTER);
 
         disclosurePanel.add(contentPanel);
 
@@ -109,11 +100,12 @@ public class SharedServicesSidePanel extends VerticalPanel implements SidebarWid
                     new AsyncCallback<ClientServiceInfo[]>() {
                         public void onSuccess(ClientServiceInfo[] results) {
                             nextUpdateRPC = System.currentTimeMillis() + 5 * 1000;
-                            
-                           while(serviceList.getWidgetCount() > results.length)
-                               serviceList.remove(serviceList.getWidgetCount() - 1);
 
-                            // TODO (nick) bug if the selected item is replaced in all sidebar widgets
+                            while (serviceList.getWidgetCount() > results.length)
+                                serviceList.remove(serviceList.getWidgetCount() - 1);
+
+                            // TODO (nick) bug if the selected item is replaced
+                            // in all sidebar widgets
                             for (int i = 0; i < results.length; i++)
                                 if (i >= serviceList.getWidgetCount())
                                     serviceList.add(new SharedServicePanel(results[i]));
@@ -124,7 +116,8 @@ public class SharedServicesSidePanel extends VerticalPanel implements SidebarWid
                         }
 
                         public void onFailure(Throwable caught) {
-                            caught.printStackTrace();
+                            new ReportableErrorDialogBox(new OneSwarmException(caught),
+                                    false).show();
                         }
                     });
 
@@ -224,14 +217,14 @@ public class SharedServicesSidePanel extends VerticalPanel implements SidebarWid
         public void setSelected() {
             if (selectedService != this) {
                 selectedService = this;
-                SharedServicePanel.this.addStyleName(FriendListPanel.CSS_FRIEND_HIGHLIGHTED);
+                SharedServicePanel.this.addStyleName(OneSwarmCss.SidebarWidget.SELECTED_ITEM);
             }
         }
 
         public void clearSelected() {
             if (selectedService == this) {
                 selectedService = null;
-                SharedServicePanel.this.removeStyleName(FriendListPanel.CSS_FRIEND_HIGHLIGHTED);
+                SharedServicePanel.this.removeStyleName(OneSwarmCss.SidebarWidget.SELECTED_ITEM);
             }
         }
     }

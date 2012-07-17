@@ -6,6 +6,8 @@ import java.util.List;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
@@ -28,20 +30,8 @@ import edu.washington.cs.oneswarm.ui.gwt.rpc.StringTools;
 
 public class NavigationSidePanel extends VerticalPanel implements SidebarWidget {
     private static OSMessages msg = OneSwarmGWT.msg;
-
-    private static final String CSS_NAV = "os-navpanel";
-
-    private static final String CSS_NAV_CORNER = "os-categoryLinkCorners";
-    private static final String CSS_NAV_CORNER_SELECTED = "os-categoryLinkCorners-selected";
-
-    private static final String CSS_NAV_LINK_SELECTED = "os-categoryLink-selected";
-    private static final String CSS_NAV_LINK = "os-categoryLink";
-
-    private static final String CSS_SIDEBAR_STATS = "os-sidebar_stats";
-    private static final String CSS_CHAT_NOTIFICATION = "os-chat_notification";
-
+    
     public static final String HYPERLINK_LABEL_TRANSFERS = "hist-transfers";
-
     public static final String HYPERLINK_LABEL_FRIENDS = "friends-panel";
 
     RoundedPanel mSelectedRP = null;
@@ -64,7 +54,7 @@ public class NavigationSidePanel extends VerticalPanel implements SidebarWidget 
 
     public NavigationSidePanel() {
         clearList = new LinkedList<SidebarWidget>();
-        addStyleName(CSS_NAV);
+        addStyleName(OneSwarmCss.SidebarBase.NAV);
 
         unreadChatHTML.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
@@ -72,12 +62,12 @@ public class NavigationSidePanel extends VerticalPanel implements SidebarWidget 
             }
         });
         unreadChatHTML.getElement().setId("unreadChatNotification");
-        unreadChatHTML.addStyleName(CSS_CHAT_NOTIFICATION);
+        unreadChatHTML.addStyleName(OneSwarmCss.SidebarBase.CHAT_NOTIFICATION);
 
-        upRateLabel.addStyleName(CSS_SIDEBAR_STATS);
-        downRateLabel.addStyleName(CSS_SIDEBAR_STATS);
-        remoteRateLabel.addStyleName(CSS_SIDEBAR_STATS);
-        this.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
+        upRateLabel.addStyleName(OneSwarmCss.SidebarBase.SIDEBAR_STATS);
+        downRateLabel.addStyleName(OneSwarmCss.SidebarBase.SIDEBAR_STATS);
+        remoteRateLabel.addStyleName(OneSwarmCss.SidebarBase.SIDEBAR_STATS);
+        this.setHorizontalAlignment(ALIGN_RIGHT);
 
         for (FileTypeFilter filter : FileTypeFilter.values()) {
             Panel rp = createCategoryPanel(filter.getUiLabel(), filter.history_state_name,
@@ -102,15 +92,15 @@ public class NavigationSidePanel extends VerticalPanel implements SidebarWidget 
         add(mFriendPanel);
         add(mSharedServices);
 
-        setCellHorizontalAlignment(mCommunityServers, HorizontalPanel.ALIGN_LEFT);
-        setCellHorizontalAlignment(mFriendPanel, HorizontalPanel.ALIGN_LEFT);
-        setCellHorizontalAlignment(mSharedServices, HorizontalPanel.ALIGN_LEFT);
+        setCellHorizontalAlignment(mCommunityServers, ALIGN_LEFT);
+        setCellHorizontalAlignment(mFriendPanel, ALIGN_LEFT);
+        setCellHorizontalAlignment(mSharedServices, ALIGN_LEFT);
     }
 
     public void add(Widget w) {
-            if (w instanceof SidebarWidget)
-                clearList.add((SidebarWidget) w);
-            super.add(w);
+        if (w instanceof SidebarWidget)
+            clearList.add((SidebarWidget) w);
+        super.add(w);
     }
 
     public FriendsSidePanel getFriendPanel() {
@@ -135,27 +125,25 @@ public class NavigationSidePanel extends VerticalPanel implements SidebarWidget 
 
     public void clearSelection() {
         if (mSelectedHP != null) {
-            mSelectedHP.setStyleName(CSS_NAV_LINK);
+            mSelectedHP.setStyleName(OneSwarmCss.SidebarBase.NAV_LINK);
         }
         if (mSelectedRP != null) {
-            mSelectedRP.setCornerStyleName(CSS_NAV_CORNER);
+            mSelectedRP.setCornerStyleName(OneSwarmCss.SidebarBase.NAV_CORNER);
         }
 
-        for (SidebarWidget sp : clearList)
+        for (SidebarWidget sp : clearList) {
             sp.clearSelection();
-
+        }
     }
 
     private Panel createCategoryPanel(String ui_label, String history_state_name, String icon_path) {
         final Hyperlink link = new Hyperlink(ui_label, history_state_name);
-        link.setStyleName(CSS_NAV_LINK);
+        link.setStyleName(OneSwarmCss.SidebarBase.NAV_LINK);
         final Image movieIcon = new Image(icon_path);
         movieIcon.setVisible(true);
-        movieIcon.addLoadListener(new LoadListener() {
-            public void onError(Widget sender) {
-            }
-
-            public void onLoad(Widget sender) {
+        movieIcon.addLoadHandler(new LoadHandler(){
+            @Override
+            public void onLoad(LoadEvent event) {
                 movieIcon.setSize("32px", "32px");
                 movieIcon.setVisible(true);
             }
@@ -173,13 +161,13 @@ public class NavigationSidePanel extends VerticalPanel implements SidebarWidget 
         final RoundedPanel rp = new RoundedPanel(ico_label, RoundedPanel.LEFT, 2);
 
         if (ui_label.equals(FileTypeFilter.All.getUiLabel())) {
-            ico_label.setStyleName(CSS_NAV_LINK_SELECTED);
-            rp.setCornerStyleName(CSS_NAV_CORNER_SELECTED);
+            ico_label.setStyleName(OneSwarmCss.SidebarBase.NAV_LINK_SELECTED);
+            rp.setCornerStyleName(OneSwarmCss.SidebarBase.NAV_CORNER_SELECTED);
             mSelectedRP = rp;
             mSelectedHP = ico_label;
         } else {
-            ico_label.setStyleName(CSS_NAV_LINK);
-            rp.setCornerStyleName(CSS_NAV_CORNER);
+            ico_label.setStyleName(OneSwarmCss.SidebarBase.NAV_LINK);
+            rp.setCornerStyleName(OneSwarmCss.SidebarBase.NAV_CORNER);
         }
 
         /**
@@ -187,14 +175,14 @@ public class NavigationSidePanel extends VerticalPanel implements SidebarWidget 
          * EntireUIRoot::onHistoryChanged, here we simply update the side panel
          * UI to reflect the current selection
          */
-        ClickHandler nav_click_listener = new ClickHandler() {
+        ClickHandler navClickHandler = new ClickHandler() {
             public void onClick(ClickEvent event) {
                 EntireUIRoot.getRoot(NavigationSidePanel.this).clearSidebarSelection();
-                mSelectedRP.setCornerStyleName(CSS_NAV_CORNER);
-                mSelectedHP.setStyleName(CSS_NAV_LINK);
+                mSelectedRP.setCornerStyleName(OneSwarmCss.SidebarBase.NAV_CORNER);
+                mSelectedHP.setStyleName(OneSwarmCss.SidebarBase.NAV_LINK);
 
-                ico_label.setStyleName(CSS_NAV_LINK_SELECTED);
-                rp.setCornerStyleName(CSS_NAV_CORNER_SELECTED);
+                ico_label.setStyleName(OneSwarmCss.SidebarBase.NAV_LINK_SELECTED);
+                rp.setCornerStyleName(OneSwarmCss.SidebarBase.NAV_CORNER_SELECTED);
 
                 mSelectedRP = rp;
                 mSelectedHP = ico_label;
@@ -218,8 +206,8 @@ public class NavigationSidePanel extends VerticalPanel implements SidebarWidget 
 
             } // onClick()
         };
-        link.addClickHandler(nav_click_listener);
-        movieIcon.addClickHandler(nav_click_listener);
+        link.addClickHandler(navClickHandler);
+        movieIcon.addClickHandler(navClickHandler);
 
         return rp;
 

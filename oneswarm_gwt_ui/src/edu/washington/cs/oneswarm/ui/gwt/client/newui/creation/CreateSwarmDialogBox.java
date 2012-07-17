@@ -142,7 +142,7 @@ public class CreateSwarmDialogBox extends OneSwarmDialogBox {
         };
 
         selectLabel = new Label(msg.create_swarm_share_manual_msg());
-        selectLabel.addStyleName(CSS_DIALOG_HEADER);
+        selectLabel.addStyleName(OneSwarmCss.Dialog.HEADER);
         selectLabel.setWidth(WIDTH + "px");
         mainTabPanel.add(selectLabel);
         mainTabPanel.setCellVerticalAlignment(selectLabel, VerticalPanel.ALIGN_TOP);

@@ -52,7 +52,6 @@ import edu.washington.cs.oneswarm.ui.gwt.rpc.OneSwarmUIServiceAsync;
 import edu.washington.cs.oneswarm.ui.gwt.rpc.StringTools;
 
 public class FriendListPanel extends VerticalPanel implements Updateable {
-    public static final String CSS_FRIEND_HIGHLIGHTED = "os-friend_highlight";
     private static OSMessages msg = OneSwarmGWT.msg;
 
     private static final int UPDATE_LIMIT = 1;
@@ -562,7 +561,7 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
             public void onClick(ClickEvent event) {
 
                 if (!isSelected && friendInfoLite.getStatus() == FriendInfoLite.STATUS_ONLINE) {
-                    FriendPanel.this.addStyleName(CSS_FRIEND_HIGHLIGHTED);
+                    FriendPanel.this.addStyleName(OneSwarmCss.SidebarWidget.SELECTED_ITEM);
                     if (mSelectedFriend != null) {
                         mSelectedFriend.clearSelected();
                     }
@@ -739,7 +738,7 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
             EntireUIRoot.getRoot(FriendListPanel.this).clearSidebarSelection();
             if (mSelectedFriend != this) {
                 mSelectedFriend = this;
-                FriendPanel.this.addStyleName(CSS_FRIEND_HIGHLIGHTED);
+                FriendPanel.this.addStyleName(OneSwarmCss.SidebarWidget.SELECTED_ITEM);
             }
             isSelected = true;
         }
@@ -747,7 +746,7 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
         public void clearSelected() {
             if (mSelectedFriend == this) {
                 mSelectedFriend = null;
-                FriendPanel.this.removeStyleName(CSS_FRIEND_HIGHLIGHTED);
+                FriendPanel.this.removeStyleName(OneSwarmCss.SidebarWidget.SELECTED_ITEM);
             }
         }
 

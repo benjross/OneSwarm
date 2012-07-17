@@ -734,7 +734,7 @@ public class EntireUIRoot extends DockPanel {
         closable.addStyleName(CSS_SEARCH_TAB_ITEM);
         final Label searchLabel = new Label(StringTools.truncate(keywords, 15, true) + " (0)");
 
-        Image closeImg = new Image(OneSwarmDialogBox.CLOSE_IMAGE_URL);
+        Image closeImg = new Image(ImageConstants.ICON_CLOSE_BUTTON);
         closable.add(searchLabel);
         closable.setCellVerticalAlignment(searchLabel, VerticalPanel.ALIGN_MIDDLE);
         Image spacerImg = new Image("images/spacer.png");

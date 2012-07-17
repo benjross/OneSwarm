@@ -230,14 +230,14 @@ public class CommunityServersSidePanel extends VerticalPanel implements Updateab
 
         public void setSelected() {
             if (this != mSelectedServer) {
-                ServerPanel.this.addStyleName(FriendListPanel.CSS_FRIEND_HIGHLIGHTED);
+                ServerPanel.this.addStyleName(OneSwarmCss.SidebarWidget.SELECTED_ITEM);
                 mSelectedServer = this;
             }
         }
 
         public void clearSelected() {
             if (this == mSelectedServer) {
-                ServerPanel.this.removeStyleName(FriendListPanel.CSS_FRIEND_HIGHLIGHTED);
+                ServerPanel.this.removeStyleName(OneSwarmCss.SidebarWidget.SELECTED_ITEM);
                 mSelectedServer = null;
             }
         }
