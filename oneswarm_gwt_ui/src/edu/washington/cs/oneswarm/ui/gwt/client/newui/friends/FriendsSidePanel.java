@@ -65,7 +65,7 @@ public class FriendsSidePanel extends VerticalPanel implements SidebarWidget {
 
         public FriendsSideInvitePanel() {
             disclosurePanel.setOpen(true);
-            disclosurePanel.addStyleName("os-friendInviteSidePanel");
+            disclosurePanel.addStyleName(OneSwarmCss.SidebarWidget.MAIN_PANEL);
             disclosurePanel.setWidth("100%");
             this.add(disclosurePanel);
 

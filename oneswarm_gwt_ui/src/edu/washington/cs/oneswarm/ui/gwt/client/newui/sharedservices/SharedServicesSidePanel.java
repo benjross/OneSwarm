@@ -47,10 +47,10 @@ public class SharedServicesSidePanel extends VerticalPanel implements SidebarWid
         serviceList.setWidth("100%");
 
         disclosurePanel.setOpen(true);
-        disclosurePanel.addStyleName(OneSwarmCss.SidebarWidget.DISCLOSURE_PANEL);
+        disclosurePanel.addStyleName(OneSwarmCss.SidebarWidget.MAIN_PANEL);
 
         MenuBar footer = new MenuBar();
-        footer.addStyleName(OneSwarmCss.SidebarWidget.FOOTER);
+        footer.addStyleName(OneSwarmCss.SidebarWidget.FOOTER_MENU_BAR);
         footer.setWidth("100%");
         MenuItem addServiceLink = new MenuItem(msg.shared_services_add_link(), new Command() {
             public void execute() {
@@ -77,7 +77,7 @@ public class SharedServicesSidePanel extends VerticalPanel implements SidebarWid
             }
         });
 
-        addServiceLink.setStylePrimaryName(OneSwarmCss.SidebarWidget.LINK);
+        addServiceLink.setStylePrimaryName(OneSwarmCss.SidebarWidget.FOOTER_MENU_ITEM);
         footer.addItem(addServiceLink);
 
         contentPanel.add(serviceList);

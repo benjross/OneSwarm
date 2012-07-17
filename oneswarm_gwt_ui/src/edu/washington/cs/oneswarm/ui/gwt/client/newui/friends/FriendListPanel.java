@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -107,7 +108,7 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
             open = Boolean.parseBoolean(openCookie);
         }
         disclosurePanel.setOpen(open);
-        disclosurePanel.addStyleName("os-friendList");
+        disclosurePanel.addStyleName(OneSwarmCss.SidebarWidget.MAIN_PANEL);
 
         // Borders.simpleBorder(panel, 5, Borders.ALL);
         // Borders.simpleBorder(panel, 5, Borders.ALL);
@@ -135,7 +136,7 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
 
         // the menu below the friend list
         MenuBar footerMenu = new MenuBar();
-        footerMenu.addStyleName("os-friendListFooter");
+        footerMenu.addStyleName(OneSwarmCss.SidebarWidget.FOOTER_MENU_BAR);
         footerMenu.setWidth("100%");
 
         MenuItem addFriendItem = new MenuItem(msg.friends_sidebar_add_friends(), new Command() {
@@ -149,7 +150,7 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
             }
         });
 
-        addFriendItem.setStylePrimaryName("os-friendListFooterMenu");
+        addFriendItem.setStylePrimaryName(OneSwarmCss.SidebarWidget.FOOTER_MENU_ITEM);
         footerMenu.addItem(addFriendItem);
         // ********** done add menu
 
@@ -229,18 +230,13 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
         MenuItem optionsItem = new MenuItem(
                 "Options<img src='images/icons/disclosure.png' width='10px' height='10px'>", true,
                 optionsMenu);
-        optionsItem.setStylePrimaryName("os-friendListFooterMenu");
+        optionsItem.setStylePrimaryName(OneSwarmCss.SidebarWidget.FOOTER_MENU_ITEM);
         // footerMenu.addItem(optionsItem);
 
         contentPanel.add(footerMenu);
         contentPanel.setCellHorizontalAlignment(footerMenu, HorizontalPanel.ALIGN_CENTER);
 
         disclosurePanel.add(contentPanel);
-
-        // RoundedPanel rp = new RoundedPanel(panel, RoundedPanel.TOPRIGHT |
-        // RoundedPanel.BOTTOMLEFT, 3);
-        // rp.setCornerStyleName("os-friendListCorners");
-        // this.initWidget(rp);
         this.add(disclosurePanel);
         if (Cookies.getCookie("ShowBlockedFriends") == null) {
             Cookies.setCookie("ShowBlockedFriends", "1", OneSwarmConstants.TEN_YEARS_FROM_NOW);

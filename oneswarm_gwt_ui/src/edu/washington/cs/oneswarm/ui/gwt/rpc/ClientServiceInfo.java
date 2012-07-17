@@ -7,7 +7,7 @@ public class ClientServiceInfo implements IsSerializable {
     public String serviceName;
     public long serviceID;
 
-    // Used only by GWT for serialization
+    // Required by GWT for serialization
     // Deprecated to discourage creating an invalid object.  
     @Deprecated
     public ClientServiceInfo() {

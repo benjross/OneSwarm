@@ -60,19 +60,19 @@ public class AddSharedServiceWizard extends OneSwarmDialogBox {
                 long id = 0l;
                 try {
                     id = Long.parseLong(serviceId.getText());
-                    if (serviceId.getStyleName().contains(OneSwarmCss.CSS_INVALID_FORM_ENTRY))
-                        serviceId.removeStyleName(OneSwarmCss.CSS_INVALID_FORM_ENTRY);
+                    if (serviceId.getStyleName().contains(OneSwarmCss.INVALID_FORM_ENTRY))
+                        serviceId.removeStyleName(OneSwarmCss.INVALID_FORM_ENTRY);
                 } catch (Exception e) {
-                    serviceId.addStyleName(OneSwarmCss.CSS_INVALID_FORM_ENTRY);
+                    serviceId.addStyleName(OneSwarmCss.INVALID_FORM_ENTRY);
                     valid = false;
                 }
 
                 String name = serviceName.getText();
                 if (name == null || name == "") {
-                    serviceName.addStyleName(OneSwarmCss.CSS_INVALID_FORM_ENTRY);
+                    serviceName.addStyleName(OneSwarmCss.INVALID_FORM_ENTRY);
                     valid = false;
-                } else if (serviceName.getStyleName().contains(OneSwarmCss.CSS_INVALID_FORM_ENTRY)) {
-                    serviceName.removeStyleName(OneSwarmCss.CSS_INVALID_FORM_ENTRY);
+                } else if (serviceName.getStyleName().contains(OneSwarmCss.INVALID_FORM_ENTRY)) {
+                    serviceName.removeStyleName(OneSwarmCss.INVALID_FORM_ENTRY);
                 }
 
                 if (valid) {

@@ -46,10 +46,10 @@ public class CommunityServersSidePanel extends VerticalPanel implements Updateab
         serverListVP.setWidth("100%");
 
         disclosurePanel.setOpen(true);
-        disclosurePanel.addStyleName("os-friendList");
+        disclosurePanel.addStyleName(OneSwarmCss.SidebarWidget.MAIN_PANEL);
 
         MenuBar footerMenu = new MenuBar();
-        footerMenu.addStyleName("os-friendListFooter");
+        footerMenu.addStyleName(OneSwarmCss.SidebarWidget.FOOTER_MENU_BAR);
         footerMenu.setWidth("100%");
         MenuItem addFriendItem = new MenuItem(msg.community_servers_sidebar_add(), new Command() {
             public void execute() {
@@ -63,7 +63,7 @@ public class CommunityServersSidePanel extends VerticalPanel implements Updateab
             }
         });
 
-        addFriendItem.setStylePrimaryName("os-friendListFooterMenu");
+        addFriendItem.setStylePrimaryName(OneSwarmCss.SidebarWidget.FOOTER_MENU_ITEM);
         footerMenu.addItem(addFriendItem);
         addFriendItem.getElement().setId("addFriendItemLink");
 
