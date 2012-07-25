@@ -2,7 +2,6 @@ package edu.washington.cs.oneswarm.ui.gwt.client.newui.sidebar;
 
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.logging.Logger;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -31,7 +30,6 @@ import edu.washington.cs.oneswarm.ui.gwt.client.newui.OneSwarmCss;
 import edu.washington.cs.oneswarm.ui.gwt.rpc.ClientServiceInfo;
 
 public class ClientServicesSidebarWidget extends SidebarWidgetList<ClientServiceInfo> {
-    private static Logger log = Logger.getLogger(ClientServicesSidebarWidget.class.getName());
     private static OSMessages msg = OneSwarmGWT.msg;
 
     public ClientServicesSidebarWidget() {
@@ -64,7 +62,7 @@ public class ClientServicesSidebarWidget extends SidebarWidgetList<ClientService
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        log.info(caught.toString());
+                        OneSwarmGWT.log(caught.toString());
                     }
                 });
     }
@@ -97,7 +95,7 @@ public class ClientServicesSidebarWidget extends SidebarWidgetList<ClientService
                             new AsyncCallback<Void>() {
                                 @Override
                                 public void onFailure(Throwable caught) {
-                                    log.info(caught.toString());
+                                    OneSwarmGWT.log(caught.toString());
                                 }
 
                                 @Override
@@ -119,7 +117,7 @@ public class ClientServicesSidebarWidget extends SidebarWidgetList<ClientService
                             new AsyncCallback<String>() {
                                 @Override
                                 public void onFailure(Throwable caught) {
-                                    log.info(caught.toString());
+                                    OneSwarmGWT.log(caught.toString());
                                 }
 
                                 @Override
@@ -216,7 +214,7 @@ public class ClientServicesSidebarWidget extends SidebarWidgetList<ClientService
                                 new AsyncCallback<Void>() {
                                     @Override
                                     public void onFailure(Throwable caught) {
-                                        log.info(caught.toString());
+                                        OneSwarmGWT.log(caught.toString());
                                     }
 
                                     @Override

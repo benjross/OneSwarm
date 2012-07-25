@@ -2,7 +2,6 @@ package edu.washington.cs.oneswarm.ui.gwt.client.newui.sidebar;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Logger;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -27,7 +26,6 @@ import edu.washington.cs.oneswarm.ui.gwt.client.newui.friends.wizard.FriendsImpo
 import edu.washington.cs.oneswarm.ui.gwt.rpc.CommunityRecord;
 
 public class CommunityServersSidebarWidget extends SidebarWidgetList<CommunityRecord> {
-    private static Logger log = Logger.getLogger(CommunityServersSidebarWidget.class.getName());
     private static OSMessages msg = OneSwarmGWT.msg;
 
     public CommunityServersSidebarWidget() {
@@ -59,7 +57,7 @@ public class CommunityServersSidebarWidget extends SidebarWidgetList<CommunityRe
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        log.info(caught.toString());
+                        OneSwarmGWT.log(caught.toString());
                     }
                 });
     }
