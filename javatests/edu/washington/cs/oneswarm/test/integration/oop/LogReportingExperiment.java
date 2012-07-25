@@ -63,6 +63,10 @@ public class LogReportingExperiment implements ExperimentInterface {
             String url = toks[1];
             try {
                  HttpURLConnection conn = (HttpURLConnection) (new URL(url)).openConnection();
+                 conn.setRequestMethod("post");
+                 if (toks.length >= 3) {
+                     conn.addRequestProperty("name", toks[2]);
+                 }
                  conn.setDoInput(true);
                  conn.setDoOutput(true);
 
