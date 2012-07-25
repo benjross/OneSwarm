@@ -2,6 +2,7 @@ package edu.washington.cs.oneswarm.ui.gwt.client.newui.sidebar;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.logging.Logger;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -24,14 +25,13 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmDialogBox;
 import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmGWT;
 import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmRPCClient;
-import edu.washington.cs.oneswarm.ui.gwt.client.ReportableErrorDialogBox;
 import edu.washington.cs.oneswarm.ui.gwt.client.i18n.OSMessages;
 import edu.washington.cs.oneswarm.ui.gwt.client.newui.ImageConstants;
 import edu.washington.cs.oneswarm.ui.gwt.client.newui.OneSwarmCss;
 import edu.washington.cs.oneswarm.ui.gwt.rpc.ClientServiceInfo;
-import edu.washington.cs.oneswarm.ui.gwt.rpc.OneSwarmException;
 
 public class ClientServicesSidebarWidget extends SidebarWidgetList<ClientServiceInfo> {
+    private static Logger log = Logger.getLogger(ClientServicesSidebarWidget.class.getName());
     private static OSMessages msg = OneSwarmGWT.msg;
 
     public ClientServicesSidebarWidget() {
@@ -64,8 +64,7 @@ public class ClientServicesSidebarWidget extends SidebarWidgetList<ClientService
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        new ReportableErrorDialogBox(msg.global_error_rpc()
-                                + msg.client_services_widget_title(), false).show();
+                        log.info(caught.toString());
                     }
                 });
     }
@@ -98,8 +97,7 @@ public class ClientServicesSidebarWidget extends SidebarWidgetList<ClientService
                             new AsyncCallback<Void>() {
                                 @Override
                                 public void onFailure(Throwable caught) {
-                                    new ReportableErrorDialogBox(msg.global_error_rpc()
-                                            + msg.client_services_widget_title(), false);
+                                    log.info(caught.toString());
                                 }
 
                                 @Override
@@ -121,8 +119,7 @@ public class ClientServicesSidebarWidget extends SidebarWidgetList<ClientService
                             new AsyncCallback<String>() {
                                 @Override
                                 public void onFailure(Throwable caught) {
-                                    new ReportableErrorDialogBox(msg.global_error_rpc()
-                                            + msg.client_services_widget_title(), false);
+                                    log.info(caught.toString());
                                 }
 
                                 @Override
@@ -219,8 +216,7 @@ public class ClientServicesSidebarWidget extends SidebarWidgetList<ClientService
                                 new AsyncCallback<Void>() {
                                     @Override
                                     public void onFailure(Throwable caught) {
-                                        new ReportableErrorDialogBox(new OneSwarmException(caught),
-                                                false).show();
+                                        log.info(caught.toString());
                                     }
 
                                     @Override

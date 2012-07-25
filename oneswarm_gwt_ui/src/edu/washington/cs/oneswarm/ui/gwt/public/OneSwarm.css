@@ -321,12 +321,6 @@ table.gwt-DecoratedTabPanel.os-xfer_details_tabs .gwt-TabPanelBottom {
 	border-bottom: 1px solid #8da0b1;
 }
 
-//
-TODO  (nick ) remove
-.os-browser_header_buttons .gwt-ListBox {
-	
-}
-
 .os-torrent-list-corners {
 	background-color: #c3d9ff;
 }
@@ -347,10 +341,6 @@ TODO  (nick ) remove
 
 .os-torrent-list-default {
 	font-size: 80%;
-}
-
-.os-torrent-list-details { /*font-size: 80%;*/
-	
 }
 
 .os-torrent-list-details-table {

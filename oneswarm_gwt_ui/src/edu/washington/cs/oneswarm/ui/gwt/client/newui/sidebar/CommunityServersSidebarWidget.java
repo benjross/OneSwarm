@@ -2,6 +2,7 @@ package edu.washington.cs.oneswarm.ui.gwt.client.newui.sidebar;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -20,13 +21,13 @@ import com.google.gwt.user.client.ui.MenuItem;
 import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmDialogBox;
 import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmGWT;
 import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmRPCClient;
-import edu.washington.cs.oneswarm.ui.gwt.client.ReportableErrorDialogBox;
 import edu.washington.cs.oneswarm.ui.gwt.client.i18n.OSMessages;
 import edu.washington.cs.oneswarm.ui.gwt.client.newui.ImageConstants;
 import edu.washington.cs.oneswarm.ui.gwt.client.newui.friends.wizard.FriendsImportWizard;
 import edu.washington.cs.oneswarm.ui.gwt.rpc.CommunityRecord;
 
 public class CommunityServersSidebarWidget extends SidebarWidgetList<CommunityRecord> {
+    private static Logger log = Logger.getLogger(CommunityServersSidebarWidget.class.getName());
     private static OSMessages msg = OneSwarmGWT.msg;
 
     public CommunityServersSidebarWidget() {
@@ -58,8 +59,7 @@ public class CommunityServersSidebarWidget extends SidebarWidgetList<CommunityRe
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        new ReportableErrorDialogBox(msg.global_error_rpc()
-                                + msg.client_services_widget_title(), false);
+                        log.info(caught.toString());
                     }
                 });
     }
