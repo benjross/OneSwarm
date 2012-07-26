@@ -5,19 +5,28 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+//TODO(ben) change name to ExitNodeManager 
 public class ExitNodeList implements Serializable{
     // Singleton Pattern.
     private final static ExitNodeList instance = new ExitNodeList();
     private static final long serialVersionUID = -7232513344463947878L;
+
     
     public static ExitNodeList getInstance(){
         return instance;
     }
     
     List<ExitNodeInfo> exitNodeList;
+    public ExitNodeInfo clientExitNodeInfo;
 
     private ExitNodeList(){
         this.exitNodeList = new LinkedList<ExitNodeInfo>();
+        // TODO (nick) do disk io
+        this.clientExitNodeInfo = ExitNodeInfo.getSafe();
+    }
+    
+    public void addNodes(String[] exitNodes) {
+        
     }
     
     public void addNodes(ExitNodeInfo[] exitNodes) {
@@ -34,6 +43,10 @@ public class ExitNodeList implements Serializable{
     private void sortAndSave(){
         Collections.sort(exitNodeList);
         //TODO serialize and save list to disk
+    }
+    
+    public boolean allowOutboundConnection(String url, int port) {
+        return clientExitNodeInfo.allowsConnectionTo(url, port);
     }
     
     public ExitNodeInfo pickServer(String url, int port) {
