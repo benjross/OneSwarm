@@ -34,20 +34,23 @@ public class LogReportingExperiment implements ExperimentInterface {
     @Override
     public void execute(String command) {
         logger.info("lre asked to execute " + command);
-        String[] toks = command.toLowerCase().split("\\s+");
+        String[] toks = command.split("\\s+");
         if (toks[0].equals("sow_log")) {
             LogManager manager = LogManager.getLogManager();
             // Activate Handler.
             bh = new BufferedHandler();
+            logger.addHandler(bh);
             
             // Elevate Levels.
-            for (String logger : toks) {
-                Logger l = manager.getLogger(logger);
+            for (String item : toks) {
+                Logger l = manager.getLogger(item);
                 if (l != null) {
-                    elevatedLevels.put(logger, l.getLevel());
+                    elevatedLevels.put(item, l.getLevel());
+                    l.setLevel(Level.ALL);
+                    l.addHandler(bh);
+                } else {
+                    logger.info("Could not find logger for " + item);
                 }
-                l.setLevel(Level.ALL);
-                l.addHandler(bh);
             }
         } else if (toks[0].equals("reap_log")) {
             LogManager manager = LogManager.getLogManager();
@@ -63,7 +66,7 @@ public class LogReportingExperiment implements ExperimentInterface {
             String url = toks[1];
             try {
                  HttpURLConnection conn = (HttpURLConnection) (new URL(url)).openConnection();
-                 conn.setRequestMethod("post");
+                 conn.setRequestMethod("POST");
                  if (toks.length >= 3) {
                      conn.addRequestProperty("name", toks[2]);
                  }
@@ -73,12 +76,13 @@ public class LogReportingExperiment implements ExperimentInterface {
                  String log = bh.getBuffer();
                  OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream());
                  out.write(log);
-                 out.close();
+                 out.flush();
                  //meh.
                  conn.getInputStream().read();
             } catch (Exception e) {
-                logger.warning("Log reporting to " + url + "failed: " + e.getMessage());
+                logger.warning("Log reporting to " + url + " failed: " + e.getMessage());
             }
+            logger.removeHandler(bh);
             bh = null;
         } else {
             logger.warning("Unknown Service command: " + toks[0]);
