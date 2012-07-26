@@ -48,6 +48,16 @@ public class ExitNodeList implements Serializable {
         return null;
     }
 
+    public void setExitNodeSharedService(long serviceId, ExitNodeInfo exitNode) {
+        localSharedExitServices.put(serviceId, exitNode);
+    }
+
+    public void removeExitNodeSharedService(long serviceId) {
+        if (isExitNodeSharedService(serviceId)) {
+            localSharedExitServices.remove(serviceId);
+        }
+    }
+
     public boolean isExitNodeSharedService(long serviceId) {
         return localSharedExitServices.containsKey(serviceId);
     }
