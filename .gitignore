@@ -25,7 +25,7 @@ error.log
 .gwt/
 
 # Run output
-./plugins/
+/plugins/
 speed_check.log
 
 # Eclipse
@@ -39,3 +39,8 @@ tomcat/
 oneswarm_gwt_ui/war/WEB-INF/classes/
 oneswarm_gwt_ui/war/oneswarmgwt/
 .gwt-tmp/
+
+# GWT development mode
+oneswarm_gwt_ui/gwt-unitCache/
+oneswarm_gwt_ui/war/WEB-INF/deploy/
+oneswarm_gwt_ui/war/WEB-INF/lib/

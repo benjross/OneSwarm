@@ -39,6 +39,8 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmDialogBox;
 import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmGWT;
 import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmRPCClient;
+import edu.washington.cs.oneswarm.ui.gwt.client.newui.OneSwarmCss;
+import edu.washington.cs.oneswarm.ui.gwt.client.newui.sidebar.FriendListSidebarWidget;
 import edu.washington.cs.oneswarm.ui.gwt.rpc.FriendInfoLite;
 import edu.washington.cs.oneswarm.ui.gwt.rpc.OneSwarmUIServiceAsync;
 
@@ -52,16 +54,16 @@ class AddFriendDialog extends OneSwarmDialogBox implements ClickHandler, ChangeH
     private final Button cancelButton = new Button("Cancel");
     private final static int WIDTH = 430;
 
-    private final FriendListPanel parent;
+    private final FriendListSidebarWidget parent;
     private final Label lengthLabel;
 
-    public AddFriendDialog(FriendListPanel parent) {
+    public AddFriendDialog(FriendListSidebarWidget parent) {
         this.parent = parent;
         this.setText("Add friend using public key");
 
         Label selectLabel = new Label(
                 "Enter your friend's nickname and public key into the fields below.");
-        selectLabel.addStyleName(CSS_DIALOG_HEADER);
+        selectLabel.addStyleName(OneSwarmCss.Dialog.HEADER);
         selectLabel.setWidth(WIDTH + "px");
         mainPanel.add(selectLabel);
 
@@ -139,7 +141,7 @@ class AddFriendDialog extends OneSwarmDialogBox implements ClickHandler, ChangeH
             @Override
             public void onSuccess(Void result) {
                 OneSwarmGWT.log("added friend " + result);
-                parent.updateUI();
+                parent.update(1);
                 createPopup();
             }
 

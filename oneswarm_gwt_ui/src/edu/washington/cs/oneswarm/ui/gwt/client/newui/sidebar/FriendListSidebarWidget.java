@@ -1,29 +1,23 @@
-/**
- * TODO: remove all the show disconnected friends logic in this code (no longer applies)
- */
-package edu.washington.cs.oneswarm.ui.gwt.client.newui.friends;
+package edu.washington.cs.oneswarm.ui.gwt.client.newui.sidebar;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.event.logical.shared.OpenEvent;
-import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Cookies;
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbsolutePanel;
-import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -37,12 +31,11 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmDialogBox;
 import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmGWT;
 import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmRPCClient;
-import edu.washington.cs.oneswarm.ui.gwt.client.Updateable;
 import edu.washington.cs.oneswarm.ui.gwt.client.i18n.OSMessages;
 import edu.washington.cs.oneswarm.ui.gwt.client.newui.EntireUIRoot;
 import edu.washington.cs.oneswarm.ui.gwt.client.newui.ImageConstants;
 import edu.washington.cs.oneswarm.ui.gwt.client.newui.OneSwarmCss;
-import edu.washington.cs.oneswarm.ui.gwt.client.newui.SwarmsBrowser;
+import edu.washington.cs.oneswarm.ui.gwt.client.newui.friends.FriendPropertiesDialog;
 import edu.washington.cs.oneswarm.ui.gwt.client.newui.friends.wizard.FriendsImportWizard;
 import edu.washington.cs.oneswarm.ui.gwt.rpc.FriendInfoLite;
 import edu.washington.cs.oneswarm.ui.gwt.rpc.FriendList;
@@ -50,15 +43,12 @@ import edu.washington.cs.oneswarm.ui.gwt.rpc.OneSwarmConstants;
 import edu.washington.cs.oneswarm.ui.gwt.rpc.OneSwarmUIServiceAsync;
 import edu.washington.cs.oneswarm.ui.gwt.rpc.StringTools;
 
-public class FriendListPanel extends VerticalPanel implements Updateable {
-    public static final String CSS_FRIEND_HIGHLIGHTED = "os-friend_highlight";
+public class FriendListSidebarWidget extends SidebarWidget {
     private static OSMessages msg = OneSwarmGWT.msg;
-
-    private static final int UPDATE_LIMIT = 1;
-    private static final String COOKIE_SHOW_OFFLINE_FRIENDS = "ShowOfflineFriends";
 
     private static final String CSS_FRIEND_LIST_ELEMENT = "os-friendListElement";
 
+    private final VerticalPanel content = new VerticalPanel();
     private final VerticalPanel friendListVP = new VerticalPanel();
     private final Map<String, FriendPanel> friendPanels = new HashMap<String, FriendPanel>();
     private boolean fullUpdateNeeded = true;
@@ -66,72 +56,19 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
 
     private FriendInfoLite[] newFriendsList = new FriendInfoLite[0];
     private FriendInfoLite[] oldFriendsList = new FriendInfoLite[0];
-    private final DisclosurePanel disclosurePanel = new DisclosurePanel(
-            msg.friends_sidebar_header(), false);
 
-    private boolean showBlocked = false;
-    private long lastClick = 0;
-
-    private final MenuItem showBlockedItem;
-
-    private boolean showDisconnected = false;
-
-    private final MenuItem showOfflineItem;
-
-    private HTML friendRequestsPanel = new HTML();
-    private VerticalPanel padding = new VerticalPanel();
+    private final HTML friendRequestsPanel = new HTML();
     private Map<String, Integer> newFriendRequestCounts = new HashMap<String, Integer>();
 
-    public FriendListPanel() {
-        super();
-        // try {
-        // if (Cookies.getCookie(COOKIE_SHOW_OFFLINE_FRIENDS) == null) {
-        // showDisconnected = true;
-        // Cookies.setCookie(COOKIE_SHOW_OFFLINE_FRIENDS, "1");
-        // } else if( Cookies.getCookie(COOKIE_SHOW_OFFLINE_FRIENDS).equals("1")
-        // ) {
-        // showDisconnected = true;
-        // } else {
-        // showDisconnected = false;
-        // }
-        // } catch (Exception e) {
-        // showDisconnected = true;
-        // }
+    public FriendListSidebarWidget() {
+        super(msg.friends_sidebar_header());
 
-        showDisconnected = false;
-
-        disclosurePanel.addOpenHandler(new OpenHandler<DisclosurePanel>() {
-            public void onOpen(OpenEvent<DisclosurePanel> event) {
-                Cookies.setCookie("friend_list_open", true + "");
-                updateHeader();
-            }
-        });
-
-        disclosurePanel.addCloseHandler(new CloseHandler<DisclosurePanel>() {
-            public void onClose(CloseEvent<DisclosurePanel> event) {
-                Cookies.setCookie("friend_list_open", false + "",
-                        OneSwarmConstants.TEN_YEARS_FROM_NOW);
-                updateHeader();
-            }
-        });
-        boolean open = true;
-        String openCookie = Cookies.getCookie("friend_list_open");
-        if (openCookie != null) {
-            open = Boolean.parseBoolean(openCookie);
-        }
-        disclosurePanel.setOpen(open);
-        disclosurePanel.addStyleName("os-friendList");
-
-        // Borders.simpleBorder(panel, 5, Borders.ALL);
-        // Borders.simpleBorder(panel, 5, Borders.ALL);
-
-        VerticalPanel contentPanel = new VerticalPanel();
-        // add the panel that will contain the friends
         friendListVP.setWidth("100%");
 
         friendRequestsPanel.setVisible(false);
         friendRequestsPanel.addStyleName("os-friendListRequestPanel");
         friendRequestsPanel.addClickHandler(new ClickHandler() {
+            @Override
             public void onClick(ClickEvent event) {
                 OneSwarmDialogBox dlg = new FriendsImportWizard(newFriendRequestCounts);
                 dlg.show();
@@ -142,16 +79,18 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
             }
         });
 
-        contentPanel.add(friendRequestsPanel);
-        contentPanel.add(padding);
-        contentPanel.add(friendListVP);
+        content.add(friendRequestsPanel);
+        content.add(friendListVP);
 
         // the menu below the friend list
         MenuBar footerMenu = new MenuBar();
-        footerMenu.addStyleName("os-friendListFooter");
+        footerMenu.addStyleName(OneSwarmCss.SidebarWidget.FOOTER_MENU_BAR);
         footerMenu.setWidth("100%");
 
-        MenuItem addFriendItem = new MenuItem(msg.friends_sidebar_add_friends(), new Command() {
+        setContent(content);
+
+        addFooterMenuItem(true, new MenuItem(msg.friends_sidebar_add_friends(), new Command() {
+            @Override
             public void execute() {
                 OneSwarmDialogBox dlg = new FriendsImportWizard(newFriendRequestCounts);
                 dlg.show();
@@ -160,112 +99,13 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
                 dlg.setPopupPosition(dlg.getPopupLeft(), Math.max(40, dlg.getPopupTop() - 200));
                 dlg.setVisible(true);
             }
-        });
-
-        addFriendItem.setStylePrimaryName("os-friendListFooterMenu");
-        footerMenu.addItem(addFriendItem);
-        // ********** done add menu
-
-        // ********** options menu
-        MenuBar optionsMenu = new MenuBar(true);
-        final String showOffline = "Show offline friends";
-        final String hideOffline = "Hide offline friends";
-        final String showBlockedStr = "Show deleted friends";
-        final String hideBlockedStr = "Hide deleted friends";
-
-        showOfflineItem = new MenuItem(showDisconnected == true ? hideOffline : showOffline,
-                new Command() {
-                    public void execute() {
-                        showDisconnected = !showDisconnected;
-                        if (showDisconnected == true) {
-                            Cookies.setCookie(COOKIE_SHOW_OFFLINE_FRIENDS, "1",
-                                    new Date(System.currentTimeMillis()
-                                            + (1 * 365 * 24 * 60 * 60 * 1000)));
-                        } else {
-                            Cookies.setCookie(COOKIE_SHOW_OFFLINE_FRIENDS, "0",
-                                    new Date(System.currentTimeMillis()
-                                            + (1 * 365 * 24 * 60 * 60 * 1000)));
-                        }
-                        if (showOfflineItem.getText().equals(showOffline)) {
-                            showOfflineItem.setText(hideOffline);
-                        } else {
-                            showOfflineItem.setText(showOffline);
-                            showBlockedItem.setText(showBlockedStr);
-                            showBlocked = false;
-                            Cookies.setCookie("ShowBlockedFriends", "1",
-                                    OneSwarmConstants.TEN_YEARS_FROM_NOW);
-                        }
-                        fullUpdateNeeded = true;
-                        update(0);
-                    }
-                });
-        optionsMenu.addItem(showOfflineItem);
-
-        showBlockedItem = new MenuItem(showBlocked == true ? hideBlockedStr : showBlockedStr,
-                new Command() {
-                    public void execute() {
-                        showBlocked = !showBlocked;
-                        if (showBlockedItem.getText().equals(showBlockedStr)) {
-                            showBlockedItem.setText(hideBlockedStr);
-                            showDisconnected = true;
-                            showOfflineItem.setText(hideOffline);
-                            Cookies.setCookie("ShowBlockedFriends", "0");
-                            OneSwarmRPCClient.getService().setRecentChanges(
-                                    OneSwarmRPCClient.getSessionID(), true,
-                                    new AsyncCallback<Void>() {
-                                        public void onFailure(Throwable caught) {
-                                            OneSwarmGWT.log("delete friend: got error");
-                                        }
-
-                                        public void onSuccess(Void result) {
-                                        }
-                                    });
-                        } else {
-                            showBlockedItem.setText(showBlockedStr);
-                            Cookies.setCookie("ShowBlockedFriends", "1");
-                            OneSwarmRPCClient.getService().setRecentChanges(
-                                    OneSwarmRPCClient.getSessionID(), true,
-                                    new AsyncCallback<Void>() {
-                                        public void onFailure(Throwable caught) {
-                                            OneSwarmGWT.log("delete friend: got error");
-                                        }
-
-                                        public void onSuccess(Void result) {
-                                        }
-                                    });
-                        }
-                        update(0);
-                    }
-                });
-        optionsMenu.addItem(showBlockedItem);
-
-        MenuItem optionsItem = new MenuItem(
-                "Options<img src='images/icons/disclosure.png' width='10px' height='10px'>", true,
-                optionsMenu);
-        optionsItem.setStylePrimaryName("os-friendListFooterMenu");
-        // footerMenu.addItem(optionsItem);
-
-        contentPanel.add(footerMenu);
-        contentPanel.setCellHorizontalAlignment(footerMenu, HorizontalPanel.ALIGN_CENTER);
-
-        disclosurePanel.add(contentPanel);
-
-        // RoundedPanel rp = new RoundedPanel(panel, RoundedPanel.TOPRIGHT |
-        // RoundedPanel.BOTTOMLEFT, 3);
-        // rp.setCornerStyleName("os-friendListCorners");
-        // this.initWidget(rp);
-        this.add(disclosurePanel);
-        if (Cookies.getCookie("ShowBlockedFriends") == null) {
-            Cookies.setCookie("ShowBlockedFriends", "1", OneSwarmConstants.TEN_YEARS_FROM_NOW);
-        }
-        OneSwarmGWT.addToUpdateTask(this);
+        }));
     }
 
     public void clearSelectedFriend() {
         if (mSelectedFriend != null) {
             mSelectedFriend.clearSelected();
         }
-        mSelectedFriend = null;
     }
 
     public FriendInfoLite getSelectedFriend() {
@@ -282,90 +122,87 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
 
     protected Map<String, Integer> mUnreadChatCounts = new HashMap<String, Integer>();
 
-    public void update(int count) {
-        if (count % UPDATE_LIMIT == 0) {
+    @Override
+    public void update() {
+        String session = OneSwarmRPCClient.getSessionID();
+        OneSwarmUIServiceAsync service = OneSwarmRPCClient.getService();
 
-            String session = OneSwarmRPCClient.getSessionID();
-            OneSwarmUIServiceAsync service = OneSwarmRPCClient.getService();
+        if (System.currentTimeMillis() > nextNewMessageRPCCheck) {
+            nextNewMessageRPCCheck = System.currentTimeMillis() + 10 * 1000;
+            service.getUnreadMessageCounts(session, new AsyncCallback<HashMap<String, Integer>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    caught.printStackTrace();
+                }
 
-            if (System.currentTimeMillis() > nextNewMessageRPCCheck) {
-                nextNewMessageRPCCheck = System.currentTimeMillis() + 10 * 1000;
-                service.getUnreadMessageCounts(session,
-                        new AsyncCallback<HashMap<String, Integer>>() {
-                            public void onFailure(Throwable caught) {
-                                caught.printStackTrace();
-                            }
+                @Override
+                public void onSuccess(HashMap<String, Integer> result) {
+                    mUnreadChatCounts = result;
+                    int total = 0;
+                    for (FriendPanel panel : friendPanels.values()) {
+                        panel.updateChatCount();
+                    }
+                    if (result.size() > 0) {
+                        for (Integer v : result.values()) {
+                            total += v;
+                        }
+                    }
+                    EntireUIRoot.getRoot(FriendListSidebarWidget.this.asWidget())
+                            .setUnreadChatCount(total);
+                    nextNewMessageRPCCheck = System.currentTimeMillis() + 2000;
+                }
+            });
+        }
 
-                            public void onSuccess(HashMap<String, Integer> result) {
-                                mUnreadChatCounts = result;
-                                int total = 0;
-                                for (FriendPanel panel : friendPanels.values()) {
-                                    panel.updateChatCount();
-                                }
-                                if (result.size() > 0) {
-                                    for (Integer v : result.values()) {
-                                        total += v;
-                                    }
-                                }
-                                EntireUIRoot.getRoot(FriendListPanel.this)
-                                        .setUnreadChatCount(total);
-                                nextNewMessageRPCCheck = System.currentTimeMillis() + 2000;
-                            }
-                        });
+        service.getFriends(session, prevListId, false, false, new AsyncCallback<FriendList>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                // well, do nothing...
+                newFriendsList = new FriendInfoLite[0];
+                OneSwarmGWT.log("error " + caught.getMessage());
             }
 
-            service.getFriends(session, prevListId, showDisconnected, showBlocked,
-                    new AsyncCallback<FriendList>() {
-                        public void onFailure(Throwable caught) {
-                            // well, do nothing...
-                            newFriendsList = new FriendInfoLite[0];
-                            OneSwarmGWT.log("error " + caught.getMessage());
-                        }
+            @Override
+            public void onSuccess(FriendList result) {
+                /*
+                 * check if something changed on the back end, if not, don't
+                 * update
+                 */
+                if (prevListId != result.getListId()) {
+                    OneSwarmGWT.log("updating friend list: " + (prevListId != result.getListId())
+                            + " prev=" + prevListId + " next=" + result.getListId());
+                    newFriendsList = result.getFriendList();
+                    prevListId = result.getListId();
+                    updateUI(true);
+                }
+            }
+        });
 
-                        public void onSuccess(FriendList result) {
-                            /*
-                             * check if something changed on the back end, if
-                             * not, don't update
-                             */
-                            if (prevListId != result.getListId()) {
-                                OneSwarmGWT.log("updating friend list: "
-                                        + (prevListId != result.getListId()) + " prev="
-                                        + prevListId + " next=" + result.getListId());
-                                newFriendsList = result.getFriendList();
-                                prevListId = result.getListId();
-                                updateUI(true);
-                            }
-                        }
-                    });
+        service.getNewFriendsCountsFromAutoCheck(session,
+                new AsyncCallback<HashMap<String, Integer>>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        OneSwarmGWT.log("error " + caught.getMessage());
+                    }
 
-            service.getNewFriendsCountsFromAutoCheck(session,
-                    new AsyncCallback<HashMap<String, Integer>>() {
-                        public void onFailure(Throwable caught) {
-                            OneSwarmGWT.log("error " + caught.getMessage());
-                        }
+                    @Override
+                    public void onSuccess(HashMap<String, Integer> result) {
+                        FriendListSidebarWidget.this.newFriendRequestCounts = result;
 
-                        public void onSuccess(HashMap<String, Integer> result) {
-                            FriendListPanel.this.newFriendRequestCounts = result;
-
-                            int sum = 0;
-                            for (String key : result.keySet()) {
-                                int count = result.get(key);
-                                sum += count;
-                            }
-                            if (sum > 0) {
-                                friendRequestsPanel.setHTML(msg
-                                        .friends_sidebar_notice_friend_updates_HTML(sum));
-                                padding.setVisible(true);
-                                padding.addStyleName("os-friendListRequestPadding");
-                                friendRequestsPanel.setVisible(true);
-                            } else {
-                                friendRequestsPanel.setVisible(false);
-                                padding.setVisible(false);
-                                padding.removeStyleName("os-friendListRequestPadding");
-                            }
+                        int sum = 0;
+                        for (String key : result.keySet()) {
+                            int count = result.get(key);
+                            sum += count;
                         }
-                    });
-        }
+                        if (sum > 0) {
+                            friendRequestsPanel.setHTML(msg
+                                    .friends_sidebar_notice_friend_updates_HTML(sum));
+                            friendRequestsPanel.setVisible(true);
+                        } else {
+                            friendRequestsPanel.setVisible(false);
+                        }
+                    }
+                });
     }
 
     public void updateUI() {
@@ -399,12 +236,10 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
                     if (f.getStatus() == FriendInfoLite.STATUS_ONLINE) {
                         mSelectedFriend.clearSelected();
                         p.setSelected();
-                        mSelectedFriend = p;
                     } else {
                         // selected friend went offline
                         p.clearSelected();
                         mSelectedFriend = null;
-                        EntireUIRoot.getRoot(this).friendFilterChanged();
                     }
                 } else {
                     p.clearSelected();
@@ -442,8 +277,6 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
                 if (f.equals(getSelectedFriend())) {
                     if (f.getStatus() == FriendInfoLite.STATUS_ONLINE) {
                         p.setSelected();
-                        mSelectedFriend = p;
-
                     } else {
                         // selected friend went offline
                         p.clearSelected();
@@ -454,6 +287,7 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
 
             GroupPanel[] sortedPanels = groups.values().toArray(new GroupPanel[0]);
             Arrays.sort(sortedPanels, new Comparator<GroupPanel>() {
+                @Override
                 public int compare(GroupPanel o1, GroupPanel o2) {
                     return o1.getName().compareTo(o2.getName());
                 }
@@ -470,16 +304,7 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
 
         friendListVP.setVisible(true);
         fullUpdateNeeded = false;
-        updateHeader();
-    }
-
-    private void updateHeader() {
-        if (!disclosurePanel.isOpen()) {
-            disclosurePanel.getHeaderTextAccessor().setText(
-                    msg.friends_sidebar_header() + " (" + oldFriendsList.length + ")");
-        } else {
-            disclosurePanel.getHeaderTextAccessor().setText(msg.friends_sidebar_header());
-        }
+        setClosedHeaderTextSuffix("(" + oldFriendsList.length + ")");
     }
 
     private class GroupPanel extends VerticalPanel {
@@ -490,6 +315,7 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
         Label countLabel = new Label();
 
         ClickHandler swapHandler = new ClickHandler() {
+            @Override
             public void onClick(ClickEvent event) {
                 boolean isOpen;
                 String neu = ImageConstants.ICON_FRIEND_GROUP_OPEN;
@@ -511,7 +337,7 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
             }
         };
 
-        private String mName;
+        private final String mName;
 
         public String getName() {
             return mName;
@@ -575,34 +401,41 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
     private class FriendPanel extends FocusPanel {
         private static final int MAX_LABEL_NAME_LENGTH = 27;
 
-        private ClickHandler clickListener = new ClickHandler() {
+        private final ClickHandler clickListener = new ClickHandler() {
+            @Override
             public void onClick(ClickEvent event) {
-
                 if (!isSelected && friendInfoLite.getStatus() == FriendInfoLite.STATUS_ONLINE) {
-                    FriendPanel.this.addStyleName(CSS_FRIEND_HIGHLIGHTED);
+                    FriendPanel.this.addStyleName(OneSwarmCss.SidebarWidget.SELECTED_ITEM);
                     if (mSelectedFriend != null) {
                         mSelectedFriend.clearSelected();
                     }
-                    mSelectedFriend = FriendPanel.this;
+                    History.newItem("friend-"
+                            + FriendListSidebarWidget.this.getSelectedFriend().getId());
                     setSelected();
-                    EntireUIRoot.getRoot(FriendListPanel.this).friendFilterChanged();
+
+                    mSelectedFriend = FriendPanel.this;
                     OneSwarmGWT.log("selected friend conn id: " + friendInfoLite.getConnectionId());
-                } else if ((System.currentTimeMillis() - lastClick) < SwarmsBrowser.DOUBLE_CLICK_THRESHOLD) {
-                    EntireUIRoot.getRoot(FriendListPanel.this).startChat(friendInfoLite);
                 }
-                lastClick = System.currentTimeMillis();
+            }
+        };
+
+        private final DoubleClickHandler doubleClickHandler = new DoubleClickHandler() {
+            @Override
+            public void onDoubleClick(DoubleClickEvent event) {
+                EntireUIRoot.getRoot(FriendListSidebarWidget.this.asWidget()).startChat(
+                        friendInfoLite);
             }
         };
 
         private FriendInfoLite friendInfoLite;
 
-        private Image statusImage = new Image("images/friend_offline.png");
+        private final Image statusImage = new Image("images/friend_offline.png");
 
-        private Label nameLabel = new Label("");
+        private final Label nameLabel = new Label("");
         private final HorizontalPanel imagePanel = new HorizontalPanel();
 
-        private HorizontalPanel mainPanel = new HorizontalPanel();
-        private AbsolutePanel labelPanel = new AbsolutePanel();
+        private final HorizontalPanel mainPanel = new HorizontalPanel();
+        private final AbsolutePanel labelPanel = new AbsolutePanel();
         private boolean isSelected = false;
         // final ;
         private final HorizontalPanel iconsPanel = new HorizontalPanel();
@@ -618,13 +451,14 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
             statusImage.setHeight(STATUS_IMAGE + "px");
             statusImage.setWidth(STATUS_IMAGE + "px");
             imagePanel.add(statusImage);
-            imagePanel.setHorizontalAlignment(ALIGN_CENTER);
+            imagePanel.setHorizontalAlignment(HorizontalPanel.ALIGN_CENTER);
             imagePanel.setWidth(STATUS_IMAGE + 2 + "px");
 
             mainPanel.add(imagePanel);
             mainPanel.setCellVerticalAlignment(imagePanel, HorizontalPanel.ALIGN_TOP);
             mainPanel.setCellHorizontalAlignment(imagePanel, HorizontalPanel.ALIGN_CENTER);
             statusImage.addClickHandler(clickListener);
+            statusImage.addDoubleClickHandler(doubleClickHandler);
 
             labelPanel.setHeight(HEIGHT + "px");
 
@@ -636,6 +470,7 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
             labelPanel.add(nameLabel, 2, 0);
 
             nameLabel.addClickHandler(clickListener);
+            nameLabel.addDoubleClickHandler(doubleClickHandler);
 
             mainPanel.add(labelPanel);
             iconsPanel.setVisible(false);
@@ -643,11 +478,13 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
 
             super.add(mainPanel);
             this.addMouseOverHandler(new MouseOverHandler() {
+                @Override
                 public void onMouseOver(MouseOverEvent event) {
                     iconsPanel.setVisible(true);
                 }
             });
             this.addMouseOutHandler(new MouseOutHandler() {
+                @Override
                 public void onMouseOut(MouseOutEvent event) {
                     iconsPanel.setVisible(false);
                 }
@@ -687,17 +524,15 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
             }
         }
 
-        public boolean isSelected() {
-            return isSelected;
-        }
-
         private Image createEditImage() {
             final Image editImage = new Image(ImageConstants.ICON_TRIANGLE);
 
             editImage.addClickHandler(new ClickHandler() {
+                @Override
                 public void onClick(ClickEvent event) {
-                    FriendPropertiesDialog dlg = new FriendPropertiesDialog(FriendListPanel.this,
-                            friendInfoLite, OneSwarmGWT.hasDevUpdates());
+                    FriendPropertiesDialog dlg = new FriendPropertiesDialog(
+                            FriendListSidebarWidget.this, friendInfoLite, OneSwarmGWT
+                                    .hasDevUpdates());
                     dlg.show();
                     dlg.setVisible(false);
                     dlg.center();
@@ -717,6 +552,7 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
             final Image editImage = new Image(ImageConstants.ICON_CHAT);
 
             editImage.addClickHandler(new ClickHandler() {
+                @Override
                 public void onClick(ClickEvent event) {
                     EntireUIRoot.getRoot(editImage).startChat(friendInfoLite);
                 }
@@ -751,18 +587,20 @@ public class FriendListPanel extends VerticalPanel implements Updateable {
         }
 
         public void setSelected() {
-            if (!isSelected) {
-                FriendPanel.this.addStyleName(CSS_FRIEND_HIGHLIGHTED);
+
+            EntireUIRoot.getRoot(FriendListSidebarWidget.this.asWidget()).clearSidebarSelection();
+            if (mSelectedFriend != this) {
+                mSelectedFriend = this;
+                FriendPanel.this.addStyleName(OneSwarmCss.SidebarWidget.SELECTED_ITEM);
             }
             isSelected = true;
         }
 
         public void clearSelected() {
-            if (isSelected) {
-                FriendPanel.this.removeStyleName(CSS_FRIEND_HIGHLIGHTED);
-                super.setFocus(false);
+            if (mSelectedFriend == this) {
+                mSelectedFriend = null;
+                FriendPanel.this.removeStyleName(OneSwarmCss.SidebarWidget.SELECTED_ITEM);
             }
-            isSelected = false;
         }
 
         public FriendInfoLite getFriendInfo() {

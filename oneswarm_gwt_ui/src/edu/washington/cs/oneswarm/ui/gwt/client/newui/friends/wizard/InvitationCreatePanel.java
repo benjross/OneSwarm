@@ -17,7 +17,9 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmRPCClient;
+import edu.washington.cs.oneswarm.ui.gwt.client.ReportableErrorDialogBox;
 import edu.washington.cs.oneswarm.ui.gwt.client.newui.HelpButton;
+import edu.washington.cs.oneswarm.ui.gwt.client.newui.OneSwarmCss;
 import edu.washington.cs.oneswarm.ui.gwt.rpc.FriendInvitationLite;
 import edu.washington.cs.oneswarm.ui.gwt.rpc.OneSwarmConstants;
 import edu.washington.cs.oneswarm.ui.gwt.rpc.OneSwarmConstants.SecurityLevel;
@@ -57,7 +59,7 @@ public class InvitationCreatePanel extends FriendsImportWithBack {
              * step 1: friends name
              */
             Label selectLabel = new HTML(msg.add_friends_manual_step_1_type_nickname_HTML());
-            selectLabel.addStyleName(FriendsImportWizard.CSS_DIALOG_HEADER);
+            selectLabel.addStyleName(OneSwarmCss.Dialog.HEADER);
             selectLabel.setWidth(WIDTH + "px");
             this.add(selectLabel);
 
@@ -89,7 +91,7 @@ public class InvitationCreatePanel extends FriendsImportWithBack {
              * step 2: security
              */
             Label sercurityLabel = new HTML(msg.add_friends_invite_create_step2_security_HTML());
-            sercurityLabel.addStyleName(FriendsImportWizard.CSS_DIALOG_HEADER);
+            sercurityLabel.addStyleName(OneSwarmCss.Dialog.HEADER);
             sercurityLabel.setWidth(WIDTH + "px");
             // this.add(sercurityLabel);
 
@@ -108,7 +110,7 @@ public class InvitationCreatePanel extends FriendsImportWithBack {
              * step 3: delivery
              */
             HTML step3Label = new HTML(msg.add_friends_invite_create_step3_delivery_HTML());
-            step3Label.addStyleName(FriendsImportWizard.CSS_DIALOG_HEADER);
+            step3Label.addStyleName(OneSwarmCss.Dialog.HEADER);
             step3Label.setWidth(WIDTH + "px");
             this.add(step3Label);
 
@@ -129,6 +131,7 @@ public class InvitationCreatePanel extends FriendsImportWithBack {
             emailTextBox.setWidth("80%");
             emailTextBox.setText(exampleEmail);
             emailTextBox.addMouseDownHandler(new MouseDownHandler() {
+                @Override
                 public void onMouseDown(MouseDownEvent event) {
                     if (emailTextBox.getText().equals(exampleEmail)) {
                         emailTextBox.setText("");
@@ -144,6 +147,7 @@ public class InvitationCreatePanel extends FriendsImportWithBack {
             manual.setValue(true);
             deliveryPanel.add(manual);
             manual.addClickHandler(new ClickHandler() {
+                @Override
                 public void onClick(ClickEvent event) {
                     emailAdressPanel.setVisible(false);
                 }
@@ -154,6 +158,7 @@ public class InvitationCreatePanel extends FriendsImportWithBack {
                     msg.add_friends_invite_create_delivery_email_help());
             deliveryPanel.add(emailRadioButton);
             emailRadioButton.addClickHandler(new ClickHandler() {
+                @Override
                 public void onClick(ClickEvent event) {
                     emailAdressPanel.setVisible(true);
                 }
@@ -189,6 +194,7 @@ public class InvitationCreatePanel extends FriendsImportWithBack {
             return "Create Invite";
         }
 
+        @Override
         public void onKeyUp(KeyUpEvent event) {
             boolean nickOk = nickBox.getText().length() > 0;
             boolean emailOk = true;
@@ -211,11 +217,13 @@ public class InvitationCreatePanel extends FriendsImportWithBack {
             OneSwarmRPCClient.getService().createInvitation(OneSwarmRPCClient.getSessionID(),
                     nickname, true, MAX_AGE, securityLevel,
                     new AsyncCallback<FriendInvitationLite>() {
+                        @Override
                         public void onFailure(Throwable caught) {
                             caught.printStackTrace();
-                            Window.alert("error: " + caught.getMessage());
+                            new ReportableErrorDialogBox("error: " + caught.getMessage(), false);
                         }
 
+                        @Override
                         public void onSuccess(final FriendInvitationLite invite) {
                             Step2.this.remove(wait);
                             final String key = invite.getKey();
@@ -223,9 +231,11 @@ public class InvitationCreatePanel extends FriendsImportWithBack {
                                 OneSwarmRPCClient.getService().getComputerName(
                                         OneSwarmRPCClient.getSessionID(),
                                         new AsyncCallback<String>() {
+                                            @Override
                                             public void onFailure(Throwable caught) {
                                             }
 
+                                            @Override
                                             public void onSuccess(String nick) {
                                                 parent.enableNextButton(true);
                                                 mailtoImpl(buildMailto(email, key, nick));
@@ -241,15 +251,15 @@ public class InvitationCreatePanel extends FriendsImportWithBack {
 
         }
 
-        private native void mailtoImpl(String mailto) /*-{
-                                                      $wnd.location = mailto;
-                                                      }-*/;
+        private void mailtoImpl(String mailto) {
+            Window.open(mailto, "_blank", "");
+        }
 
         private VerticalPanel createDisplayCodePanel(String code) {
             VerticalPanel p = new VerticalPanel();
 
             HTML label = new HTML(msg.add_friends_invite_create_done_step4_send_HTML());
-            label.addStyleName(FriendsImportWizard.CSS_DIALOG_HEADER);
+            label.addStyleName(OneSwarmCss.Dialog.HEADER);
             label.setWidth(WIDTH + "px");
             p.add(label);
 
@@ -266,7 +276,7 @@ public class InvitationCreatePanel extends FriendsImportWithBack {
             VerticalPanel p = new VerticalPanel();
 
             HTML label = new HTML(msg.add_friends_invite_create_done_step4_email_HTML());
-            label.addStyleName(FriendsImportWizard.CSS_DIALOG_HEADER);
+            label.addStyleName(OneSwarmCss.Dialog.HEADER);
             label.setWidth(WIDTH + "px");
             p.add(label);
             Label explanaition = new Label(msg.add_friends_invite_create_done_step4_email_notice());

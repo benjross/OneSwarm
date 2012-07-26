@@ -136,7 +136,8 @@ public class SharedService implements Comparable<SharedService> {
     @Override
     public String toString() {
         InetSocketAddress address = getAddress();
-        return "key=" + searchKey + getName() + " " + address + " enabled=" + isEnabled();
+        return "key=" + searchKey + " name=" + getName() + " address=" + address + " enabled="
+                + isEnabled();
     }
 
     public void clean() {
