@@ -9,8 +9,6 @@ import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.SocketChannel;
 import java.util.logging.Logger;
 
-import org.apache.commons.lang.ArrayUtils;
-
 import com.aelitis.azureus.core.networkmanager.NetworkConnection;
 import com.aelitis.azureus.core.networkmanager.Transport;
 import com.aelitis.azureus.core.networkmanager.impl.NetworkConnectionImpl;
@@ -50,6 +48,19 @@ public class SocksCommandHandler {
         byte[] doCommand(byte command, SocketChannel client, String address, int port)
                 throws SocksException;
     }
+    
+    private static byte[] concat(byte[] first, byte[] second) {
+       int firstLength = first.length;
+       int secondLength = second.length;
+       byte[] result = new byte[firstLength + secondLength];
+       for (int i = 0; i < firstLength; i++) {
+           result[i] = first[i];
+       }
+       for (int j = 0; j < secondLength; j++) {
+           result[firstLength + j] = second[j];
+       }
+       return result;
+    };
 
     public static class HandoffToOneSwarm implements SocksCommandHandler.Interface {
         public byte[] doCommand(byte command, SocketChannel client, String address, int port)
@@ -85,7 +96,7 @@ public class SocksCommandHandler {
 
                 NetworkConnection nc = new NetworkConnectionImpl(transport, encoder, decoder);
                 ServiceConnectionManager.getInstance().requestService(nc, server.getId());
-                return ArrayUtils.addAll(server.getIpAddr(), new byte[]{0,0});
+                return concat(server.getIpAddr(), new byte[]{0,0});
             default:
                 throw new SocksException(SocksConstants.Status.COMMAND_NOT_SUPPORTED);
             }
@@ -123,7 +134,7 @@ public class SocksCommandHandler {
                 byte[] exposedIp = remote.socket().getLocalAddress().getAddress();
                 int exposedPort = remote.socket().getLocalPort();
                 
-                return ArrayUtils.addAll(exposedIp, new byte[]{(byte)(exposedPort & 0xff00 >> 8), (byte)exposedPort});
+                return concat(exposedIp, new byte[]{(byte)(exposedPort & 0xff00 >> 8), (byte)exposedPort});
             default:
                 throw new SocksException(SocksConstants.Status.COMMAND_NOT_SUPPORTED);
             }
