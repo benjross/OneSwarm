@@ -39,6 +39,8 @@ public class LogReportingExperiment implements ExperimentInterface {
             LogManager manager = LogManager.getLogManager();
             // Activate Handler.
             bh = new BufferedHandler();
+            bh.setLevel(Level.ALL);
+            bh.publish(new LogRecord(Level.INFO, "Logging Sown"));
             logger.addHandler(bh);
             
             // Elevate Levels.
@@ -74,6 +76,7 @@ public class LogReportingExperiment implements ExperimentInterface {
                  conn.setDoOutput(true);
 
                  String log = bh.getBuffer();
+                 conn.addRequestProperty("content-length", "" + log.length());
                  OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream());
                  out.write(log);
                  out.flush();
