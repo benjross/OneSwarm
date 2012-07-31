@@ -43,13 +43,27 @@ public class DatagramRateLimitedChannelQueue extends DatagramRateLimiter {
     public void allocateTokens() {
     }
 
+    /**
+     * Fill the token bucket for this queue with up to the given number of tokens.
+     * @param tokens the number of tokens available to be added to the bucket.
+     * @return The number of tokens added to the bucket.
+     */
     @Override
     public synchronized int refillBucket(int tokens) {
+        int originalTokens = availableTokens;
         availableTokens += tokens;
-        assert (availableTokens >= 0);
+
         if (logger.isLoggable(Level.FINEST)) {
             logger.finest(toString() + ": refilling " + tokens + " tokens, available="
                     + availableTokens);
+        }
+        
+        // Overflows.
+        if (originalTokens < availableTokens && tokens > 0) {
+            logger.finest(toString() + ": bucket overflow.");
+            int used = maxAvailableTokens - originalTokens;
+            availableTokens = maxAvailableTokens;
+            tokens = used;
         }
         // Send
         send();
