@@ -59,7 +59,7 @@ public class DatagramRateLimitedChannelQueue extends DatagramRateLimiter {
         }
         
         // Overflows.
-        if (originalTokens < availableTokens && tokens > 0) {
+        if (availableTokens < originalTokens && tokens > 0) {
             logger.finest(toString() + ": bucket overflow.");
             int used = maxAvailableTokens - originalTokens;
             availableTokens = maxAvailableTokens;
