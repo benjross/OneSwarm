@@ -392,8 +392,11 @@ public abstract class OverlayEndpoint implements EndpointInterface {
     public abstract void start();
 
     protected long writeMessageToFriendConnection(DirectByteBuffer msgBuffer) {
+        // TODO(willscott): If no sender, calculate window from overlayTransport.
+        FriendConnection.OverlayForward sender = friendConnection.getOverlayForwards().get(channelId);
+        int windowSize = sender == null? -1 : sender.getQueueAvailable();
         OSF2FChannelDataMsg msg = new OSF2FChannelDataMsg(OSF2FMessage.CURRENT_VERSION, channelId,
-                msgBuffer);
+                windowSize, msgBuffer);
         long totalWritten = msgBuffer.remaining(DirectByteBuffer.SS_MSG);
         this.writeMessage(msg);
         bytesOut += totalWritten;

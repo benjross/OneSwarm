@@ -21,10 +21,11 @@ import com.aelitis.azureus.core.networkmanager.impl.tcp.TCPTransportImpl;
 import com.aelitis.azureus.core.peermanager.messaging.MessageStreamDecoder;
 import com.aelitis.azureus.core.peermanager.messaging.MessageStreamEncoder;
 
+import edu.washington.cs.oneswarm.f2f.servicesharing.ClientService;
 import edu.washington.cs.oneswarm.f2f.servicesharing.ExitNodeInfo;
 import edu.washington.cs.oneswarm.f2f.servicesharing.ExitNodeList;
 import edu.washington.cs.oneswarm.f2f.servicesharing.RawMessageFactory;
-import edu.washington.cs.oneswarm.f2f.servicesharing.ServiceConnectionManager;
+import edu.washington.cs.oneswarm.f2f.servicesharing.ServiceSharingManager;
 
 public class SocksCommandHandler {
     public final static Logger logger = Logger.getLogger(SocksCommandHandler.class.getName());
@@ -95,7 +96,12 @@ public class SocksCommandHandler {
                 transport.setAlreadyRead(header);
 
                 NetworkConnection nc = new NetworkConnectionImpl(transport, encoder, decoder);
-                ServiceConnectionManager.getInstance().requestService(nc, server.getId());
+                
+                ClientService service = ServiceSharingManager.getInstance().getClientService(server.getId());
+                if (service == null) {
+                    service = new ClientService(server.getId());
+                }
+                service.connectionRouted(nc, null);
                 return concat(server.getIpAddr(), new byte[]{0,0});
             default:
                 throw new SocksException(SocksConstants.Status.COMMAND_NOT_SUPPORTED);

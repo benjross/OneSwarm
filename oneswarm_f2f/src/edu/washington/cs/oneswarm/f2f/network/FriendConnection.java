@@ -2348,6 +2348,10 @@ public class FriendConnection implements DatagramListener {
         public int getForwardingRate() {
             return (int) average.getAverage();
         }
+        
+        public int getQueueAvailable() {
+            return conn.getSendQueueCurrentCapacity(channelId);
+        }
 
         public int getChannelId() {
             return channelId;

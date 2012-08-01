@@ -127,7 +127,10 @@ public class DatagramRateLimitedChannelQueue extends DatagramRateLimiter {
                 availableTokens -= messageSize;
                 queueLength -= messageSize;
                 bytes += messageSize;
-                sendThread.queueMessage(msg);
+                sendThread.queueMessage(msg, false);
+            }
+            if (packets > 0) {
+                sendThread.notifyQueue();
             }
             uploadRate.addValue(bytes);
             updateMaxQueueLength();

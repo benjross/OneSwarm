@@ -30,18 +30,18 @@ public class OSF2FServiceDataMsg extends OSF2FChannelDataMsg {
     // with no options: 1 word channel, 2 word header.
     public static final int BASE_LENGTH = 12;
 
-    public OSF2FServiceDataMsg(byte _version, int channelID, int sequenceNumber, short subchannel,
+    public OSF2FServiceDataMsg(byte _version, int channelID, int windowSize, int sequenceNumber, short subchannel,
             int[] options, DirectByteBuffer data) {
-        super(_version, channelID, data);
+        super(_version, channelID, windowSize, data);
         this.version = VERSION_NUM;
         this.subchannel = subchannel;
         this.options = options;
         this.sequenceNumber = sequenceNumber;
     }
 
-    private OSF2FServiceDataMsg(byte _version, int channelID, int sequenceNumber, short subchannel,
+    private OSF2FServiceDataMsg(byte _version, int channelID, int windowSize, int sequenceNumber, short subchannel,
             int[] options, DirectByteBuffer data, byte control) {
-        this(_version, channelID, sequenceNumber, subchannel, options, data);
+        this(_version, channelID, windowSize, sequenceNumber, subchannel, options, data);
         this.control = control;
     }
 
@@ -56,7 +56,7 @@ public class OSF2FServiceDataMsg extends OSF2FChannelDataMsg {
             }
             data.flip(ss);
         }
-        OSF2FServiceDataMsg msg = new OSF2FServiceDataMsg(_version, channelID, acknowledgements[0],
+        OSF2FServiceDataMsg msg = new OSF2FServiceDataMsg(_version, channelID, -1, acknowledgements[0],
                 subchannel, new int[0], data, (byte) 8);
         msg.setDatagram(datagram);
         return msg;
@@ -145,7 +145,7 @@ public class OSF2FServiceDataMsg extends OSF2FChannelDataMsg {
         for (int i = 0; i < words; i++) {
             options[i] = payload.getInt(SS_MSG);
         }
-        return new OSF2FServiceDataMsg(version, msg.getChannelId(), num, subchannel, options,
+        return new OSF2FServiceDataMsg(version, msg.getChannelId(), msg.getWindowSize(), num, subchannel, options,
                 payload,
                 (byte) (control & 0x0f));
     }

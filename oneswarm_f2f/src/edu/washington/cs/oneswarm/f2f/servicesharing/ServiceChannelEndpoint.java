@@ -248,7 +248,7 @@ public class ServiceChannelEndpoint extends OverlayEndpoint {
         // Outgoing msg will be freed by super.writeMessage.
         msg.msg.incrementReferenceCount();
         OSF2FServiceDataMsg outgoing = new OSF2FServiceDataMsg(OSF2FMessage.CURRENT_VERSION,
-                channelId, num.getNum(), num.getFlow(), new int[0], msg.msg);
+                channelId, -1, num.getNum(), num.getFlow(), new int[0], msg.msg);
 
         if (num.getNum() == 0 && !msg.rst) {
             // Mark SYN messages.

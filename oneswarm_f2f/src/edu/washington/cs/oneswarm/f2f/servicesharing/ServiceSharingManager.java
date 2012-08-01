@@ -77,7 +77,7 @@ public class ServiceSharingManager {
                     "ID", ""));
             InetAddress cht = InetAddress.getByName("128.208.2.60");
             registerSharedService(searchKey, "cht.oneswarm.org", new InetSocketAddress(cht, 11743),
-                    false);
+                    false, SharedService.class);
         } catch (UnsupportedEncodingException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -258,7 +258,7 @@ public class ServiceSharingManager {
                     SHARED_SERVICE_CONFIG_KEY, new LinkedList<Long>());
             for (Long key : services) {
                 SharedService cs;
-                if (ExitNodeList.getInstance().isExitNodeSharedService(key)) {
+                if (!ExitNodeList.getInstance().isExitNodeSharedService(key)) {
                     cs = new SharedService(key);
                 } else {
                     cs = new ExitNodeSharedService(key);
@@ -308,13 +308,20 @@ public class ServiceSharingManager {
         }
         return port;
     }
+    
+    public void registerExitNodeSharedService(long searchKey, String name, InetSocketAddress address, ExitNodeInfo info) {
+        // Tell the list that connections are allowed to exit from this key.
+        ExitNodeList.getInstance().setExitNodeSharedService(searchKey, info);
+        
+        registerSharedService(searchKey, name, address, true, ExitNodeSharedService.class);
+    }
 
     public void registerSharedService(long searchKey, String name, InetSocketAddress address) {
-        registerSharedService(searchKey, name, address, true);
+        registerSharedService(searchKey, name, address, true, SharedService.class);
     }
 
     public void registerSharedService(long searchKey, String name, InetSocketAddress address,
-            boolean loadAutomatically) {
+            boolean loadAutomatically, Class serviceClass) {
         logger.fine("Registering service: key=" + searchKey + " name=" + name + " address="
                 + address);
         enableLowLatencyNetwork();
@@ -330,7 +337,7 @@ public class ServiceSharingManager {
                     services.add(Long.valueOf(searchKey));
                     COConfigurationManager.setParameter(SHARED_SERVICE_CONFIG_KEY, services);
                 }
-                ss = new SharedService(searchKey);
+                ss = (SharedService) serviceClass.getConstructor(long.class).newInstance(searchKey);
                 ss.setName(name);
                 ss.setAddress(address);
                 logger.info("created new service: " + ss);
@@ -340,6 +347,7 @@ public class ServiceSharingManager {
                 ss.setName(name);
                 ss.setAddress(address);
             }
+        } catch(Exception e) {
         } finally {
             lock.unlock();
         }

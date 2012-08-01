@@ -409,7 +409,7 @@ public class DatagramConnection extends DatagramRateLimiter {
                 sendChannelMessage((OSF2FChannelMsg) message);
             } else {
                 // Send directly to socket.
-                sendThread.queueMessage(message);
+                sendThread.queueMessage(message, true);
             }
         } catch (InterruptedException e) {
             // TODO Auto-generated catch block
@@ -524,7 +524,7 @@ public class DatagramConnection extends DatagramRateLimiter {
             }
         }
 
-        public void queueMessage(OSF2FMessage message) throws InterruptedException {
+        public void queueMessage(OSF2FMessage message, boolean notify) throws InterruptedException {
             int messageSize = message.getMessageSize();
             if (messageSize > MAX_DATAGRAM_PAYLOAD_SIZE) {
                 logger.warning("tried to send too large datagram: " + messageSize);
@@ -541,6 +541,14 @@ public class DatagramConnection extends DatagramRateLimiter {
                     logger.finest("message queued, queue_length=" + queueLength);
                 }
                 messageQueue.add(message);
+                if (notify) {
+                    messageQueue.notify();
+                }
+            }
+        }
+        
+        public void notifyQueue() {
+            synchronized (messageQueue) {
                 messageQueue.notify();
             }
         }

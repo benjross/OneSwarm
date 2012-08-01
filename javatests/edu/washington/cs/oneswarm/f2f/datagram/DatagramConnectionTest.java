@@ -23,6 +23,7 @@ import com.aelitis.azureus.core.peermanager.messaging.Message;
 
 import edu.washington.cs.oneswarm.f2f.datagram.DatagramConnection.ReceiveState;
 import edu.washington.cs.oneswarm.f2f.datagram.DatagramConnection.SendState;
+import edu.washington.cs.oneswarm.f2f.messaging.OSF2FChannelDataMsg;
 import edu.washington.cs.oneswarm.f2f.messaging.OSF2FDatagramInit;
 import edu.washington.cs.oneswarm.f2f.messaging.OSF2FDatagramOk;
 import edu.washington.cs.oneswarm.f2f.messaging.OSF2FMessage;
@@ -36,8 +37,8 @@ public class DatagramConnectionTest extends OneSwarmTestBase {
     public static final byte SS = DirectByteBuffer.SS_MSG;
     public static final int LOTS_OF_TOKENS = 100 * 1000 * 1000;
 
-    // Leave room for 1 word channel_id + 2 word service header
-    public static final int MAX_CHANNEL_MESSAGE_PAYLOAD_SIZE = MAX_DATAGRAM_PAYLOAD_SIZE - 12;
+    // Leave room for 1 word channel_id + 1 word window size + 2 word service header
+    public static final int MAX_CHANNEL_MESSAGE_PAYLOAD_SIZE = MAX_DATAGRAM_PAYLOAD_SIZE - 16;
 
     private static class MockDatagramConnectionManager implements DatagramConnectionManager {
         DatagramSocket socket;
@@ -47,7 +48,7 @@ public class DatagramConnectionTest extends OneSwarmTestBase {
 
         public MockDatagramConnectionManager(String desc) throws SocketException {
             this.socket = new DatagramSocket();
-            socket.setSoTimeout(500);
+            socket.setSoTimeout(1000);
             this.desc = desc;
             rateLimiter.setTokenBucketSize(LOTS_OF_TOKENS);
         }
@@ -278,7 +279,7 @@ public class DatagramConnectionTest extends OneSwarmTestBase {
     }
 
     private OSF2FServiceDataMsg createPacket(DirectByteBuffer data, int channel) {
-        OSF2FServiceDataMsg msg = new OSF2FServiceDataMsg((byte) 0, channel, sequenceNumber++,
+        OSF2FServiceDataMsg msg = new OSF2FServiceDataMsg((byte) 0, channel, -1, sequenceNumber++,
                 (short) 1000, new int[0], data);
         return msg;
     }
@@ -333,7 +334,7 @@ public class DatagramConnectionTest extends OneSwarmTestBase {
         // Make sure that all are sent together.
         skipOkPackets = false;
         int packets = MAX_DATAGRAM_PAYLOAD_SIZE / (OSF2FMessage.MESSAGE_HEADER_LEN) + 1 + 1;
-        synchronized (conn1.encrypter) {
+        synchronized (conn1.sendThread.messageQueue) {
             for (int i = 0; i < packets; i++) {
                 conn1.sendMessage(new OSF2FDatagramOk(0));
             }
