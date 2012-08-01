@@ -4,7 +4,7 @@ import com.aelitis.azureus.core.networkmanager.NetworkConnection;
 
 public class ExitNodeSharedService extends SharedService {
 
-    ExitNodeSharedService(long searchKey) {
+    ExitNodeSharedService(Long searchKey) {
         super(searchKey);
     }
 

@@ -321,7 +321,7 @@ public class ServiceSharingManager {
     }
 
     public void registerSharedService(long searchKey, String name, InetSocketAddress address,
-            boolean loadAutomatically, Class serviceClass) {
+            boolean loadAutomatically, Class<? extends SharedService> serviceClass) {
         logger.fine("Registering service: key=" + searchKey + " name=" + name + " address="
                 + address);
         enableLowLatencyNetwork();
@@ -337,7 +337,7 @@ public class ServiceSharingManager {
                     services.add(Long.valueOf(searchKey));
                     COConfigurationManager.setParameter(SHARED_SERVICE_CONFIG_KEY, services);
                 }
-                ss = (SharedService) serviceClass.getConstructor(long.class).newInstance(searchKey);
+                ss = (SharedService) serviceClass.getConstructor(Long.class).newInstance(searchKey);
                 ss.setName(name);
                 ss.setAddress(address);
                 logger.info("created new service: " + ss);
@@ -348,6 +348,7 @@ public class ServiceSharingManager {
                 ss.setAddress(address);
             }
         } catch(Exception e) {
+            e.printStackTrace();
         } finally {
             lock.unlock();
         }

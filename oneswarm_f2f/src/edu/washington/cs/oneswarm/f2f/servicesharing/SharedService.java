@@ -27,7 +27,7 @@ public class SharedService implements Comparable<SharedService> {
 
     final long searchKey;
 
-    SharedService(long searchKey) {
+    public SharedService(Long searchKey) {
         this.searchKey = searchKey;
     }
 
