@@ -4,12 +4,13 @@ import com.aelitis.azureus.core.networkmanager.NetworkConnection;
 
 public class ExitNodeSharedService extends SharedService {
 
-    ExitNodeSharedService(Long searchKey) {
+    public ExitNodeSharedService(Long searchKey) {
         super(searchKey);
     }
 
     @Override
     public NetworkConnection createConnection() {
-        return new PolicyNetworkConnection(this.searchKey);
+        PolicyNetworkConnection pnc = new PolicyNetworkConnection(this.searchKey);
+        return new ListenedNetworkConnection(pnc, this.getMonitoringListener(pnc));
     }
 }

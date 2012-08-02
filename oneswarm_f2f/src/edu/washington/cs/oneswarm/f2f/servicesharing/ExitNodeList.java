@@ -2,6 +2,7 @@ package edu.washington.cs.oneswarm.f2f.servicesharing;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ public class ExitNodeList implements Serializable {
 
     private ExitNodeList() {
         this.exitNodeList = new LinkedList<ExitNodeInfo>();
+        this.localSharedExitServices = new HashMap<Long, ExitNodeInfo>();
     }
 
     public void addNodes(ExitNodeInfo[] exitNodes) {

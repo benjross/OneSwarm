@@ -48,7 +48,9 @@ public class ServiceSharingExperiment implements ExperimentInterface {
 
             // Set up policy.
             String[] exitPolicy = new String[] {"accept *:*"};
-            ExitNodeList.getInstance().addNode(new ExitNodeInfo("socks_server", key, 0, exitPolicy, null, null));
+            ExitNodeInfo info = new ExitNodeInfo("socks_server", key, 0, exitPolicy, null, null);
+            info.setIpAddr(new InetSocketAddress("localhost", 0).getAddress().getAddress());
+            ExitNodeList.getInstance().addNode(info);
             // Start the client listener.
             SocksCommandHandler.Interface handler = new SocksCommandHandler.HandoffToOneSwarm();
             OSSocksServer server = new OSSocksServer(port, handler);

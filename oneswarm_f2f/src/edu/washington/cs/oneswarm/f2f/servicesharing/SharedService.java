@@ -73,7 +73,7 @@ public class SharedService implements Comparable<SharedService> {
         return this.getName().compareTo(that.getName());
     }
 
-    private ConnectionListener getMonitoringListener(final NetworkConnection conn)
+    protected ConnectionListener getMonitoringListener(final NetworkConnection conn)
     {
         final SharedService self = this;
         return new ConnectionListener() {

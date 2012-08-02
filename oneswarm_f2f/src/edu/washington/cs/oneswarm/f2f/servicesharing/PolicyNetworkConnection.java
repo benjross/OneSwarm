@@ -3,6 +3,7 @@ package edu.washington.cs.oneswarm.f2f.servicesharing;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.logging.Logger;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.gudy.azureus2.core3.util.DirectByteBuffer;
@@ -23,6 +24,7 @@ import edu.washington.cs.oneswarm.f2f.servicesharing.DataMessage.RawMessageDecod
 import edu.washington.cs.oneswarm.f2f.servicesharing.DataMessage.RawMessageEncoder;
 
 public class PolicyNetworkConnection implements NetworkConnection {
+    public final static Logger logger = Logger.getLogger(PolicyNetworkConnection.class.getName());
     /**
      * Read an initial header from an incoming stream before creating an actual
      * network connection. Header looks like: port * 2, addres length, address.
@@ -47,8 +49,10 @@ public class PolicyNetworkConnection implements NetworkConnection {
     }
 
     protected void completeHeader(Message message, boolean manual_listener_notify) {
+        logger.info("Policy network connection header completed.");
         if (ExitNodeList.getInstance().allowLocalExitConnection(serviceId, request.host,
                 request.port)) {
+            logger.info("Connection allowed to " + request.host + ":" + request.port);
             InetSocketAddress address = new InetSocketAddress(request.host, request.port);
             ConnectionEndpoint target = new ConnectionEndpoint(address);
             target.addProtocol(new ProtocolEndpointTCP(address));
@@ -59,6 +63,7 @@ public class PolicyNetworkConnection implements NetworkConnection {
             }
             this.connection.getOutgoingMessageQueue().addMessage(message, manual_listener_notify);
         } else {
+            logger.info("Connection denied to " + request.host + ":" + request.port);
             if (this.pendingListener != null) {
                 this.pendingListener.connectFailure(new Throwable("Connection Denied by policy"));
             }
@@ -181,8 +186,8 @@ public class PolicyNetworkConnection implements NetworkConnection {
                             PolicyNetworkConnection.this.completeHeader(message,
                                     manual_listener_notify);
                         } else {
-                            int port = data[0].get(SS) << 8;
-                            port += data[0].get(SS);
+                            int port = data[0].getShort(SS);
+                            logger.warning("Port read as " + port);
                             PolicyNetworkConnection.this.request.port = port;
                             PolicyNetworkConnection.this.request.toRead = data[0].get(SS);
                             PolicyNetworkConnection.this.request.lengthRead = true;
@@ -292,6 +297,7 @@ public class PolicyNetworkConnection implements NetworkConnection {
 
     @Override
     public void startMessageProcessing() {
+        NetworkManager.getSingleton().startTransferProcessing( this );
         connection.startMessageProcessing();
     }
 

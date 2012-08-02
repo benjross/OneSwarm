@@ -311,6 +311,7 @@ public class ServiceSharingManager {
     
     public void registerExitNodeSharedService(long searchKey, String name, InetSocketAddress address, ExitNodeInfo info) {
         // Tell the list that connections are allowed to exit from this key.
+        info.setIpAddr(address.getAddress().getAddress());
         ExitNodeList.getInstance().setExitNodeSharedService(searchKey, info);
         
         registerSharedService(searchKey, name, address, true, ExitNodeSharedService.class);

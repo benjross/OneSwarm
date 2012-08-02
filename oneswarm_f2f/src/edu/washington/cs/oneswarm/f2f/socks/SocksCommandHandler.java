@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 
 import com.aelitis.azureus.core.networkmanager.NetworkConnection;
 import com.aelitis.azureus.core.networkmanager.Transport;
+import com.aelitis.azureus.core.networkmanager.impl.IncomingConnectionManager;
 import com.aelitis.azureus.core.networkmanager.impl.NetworkConnectionImpl;
 import com.aelitis.azureus.core.networkmanager.impl.TransportHelper;
 import com.aelitis.azureus.core.networkmanager.impl.TransportHelperFilter;
@@ -77,6 +78,13 @@ public class SocksCommandHandler {
                     throw new SocksException(
                             SocksConstants.Status.CONNECTION_NOT_ALLOWED_BY_RULESET);
 
+                try {
+                    client.configureBlocking(false);
+                } catch (IOException e) {
+                    logger.warning("Couldn't set incomming connection to non-blocking.");
+                    e.printStackTrace();
+                    throw new SocksException(SocksConstants.Status.GENERAL_FAILURE);
+                }
                 TransportHelper helper = new TCPTransportHelper(client);
                 ProtocolEndpointTCP endpoint = new ProtocolEndpointTCP(helper.getAddress());
                 TransportHelperFilter filter = new TransportHelperFilterTransparent(helper, true);
@@ -89,10 +97,10 @@ public class SocksCommandHandler {
                 // | port high bits | port low | address length | address |
                 // -----------------------------------------------------------
                 ByteBuffer header = ByteBuffer.allocate(3 + address.length());
-                header.put((byte) (port & 0xff00 >> 8));
-                header.put((byte) (port & 0xff));
+                header.putShort((short) port);
                 header.put((byte) (address.length() & 0xff));
                 header.put(address.getBytes());
+                header.flip();
                 transport.setAlreadyRead(header);
 
                 NetworkConnection nc = new NetworkConnectionImpl(transport, encoder, decoder);
@@ -102,6 +110,7 @@ public class SocksCommandHandler {
                     service = new ClientService(server.getId());
                 }
                 service.connectionRouted(nc, null);
+                transport.connectedInbound();
                 return concat(server.getIpAddr(), new byte[]{0,0});
             default:
                 throw new SocksException(SocksConstants.Status.COMMAND_NOT_SUPPORTED);
