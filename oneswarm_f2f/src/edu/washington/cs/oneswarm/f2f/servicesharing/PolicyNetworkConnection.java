@@ -27,7 +27,7 @@ public class PolicyNetworkConnection implements NetworkConnection {
     public final static Logger logger = Logger.getLogger(PolicyNetworkConnection.class.getName());
     /**
      * Read an initial header from an incoming stream before creating an actual
-     * network connection. Header looks like: port * 2, addres length, address.
+     * network connection. Header looks like: port * 2, address length, address.
      */
     private NetworkConnection connection;
     private ConnectionListener pendingListener;
@@ -37,7 +37,7 @@ public class PolicyNetworkConnection implements NetworkConnection {
 
     private class PolicyHeader {
         public int port = 0;
-        public String host = "";
+        public String host = null;
         public int toRead = 3;
         public boolean lengthRead = false;
     }
@@ -61,7 +61,9 @@ public class PolicyNetworkConnection implements NetworkConnection {
             if (this.pendingListener != null) {
                 this.connection.connect(true, this.pendingListener);
             }
-            this.connection.getOutgoingMessageQueue().addMessage(message, manual_listener_notify);
+            if (message.getData().length > 0) {
+                this.connection.getOutgoingMessageQueue().addMessage(message, manual_listener_notify);
+            }
         } else {
             logger.info("Connection denied to " + request.host + ":" + request.port);
             if (this.pendingListener != null) {
@@ -177,24 +179,43 @@ public class PolicyNetworkConnection implements NetworkConnection {
                 @Override
                 public void addMessage(Message message, boolean manual_listener_notify) {
                     DirectByteBuffer[] data = message.getData();
-                    int remaining = PolicyNetworkConnection.this.request.toRead;
-                    if (data.length > 0 && data[0].remaining(SS) > remaining) {
-                        if (PolicyNetworkConnection.this.request.lengthRead) {
-                            byte[] addr = new byte[remaining];
-                            data[0].get(SS, addr);
-                            PolicyNetworkConnection.this.request.host = new String(addr);
-                            PolicyNetworkConnection.this.completeHeader(message,
-                                    manual_listener_notify);
-                        } else {
-                            int port = data[0].getShort(SS);
-                            logger.warning("Port read as " + port);
-                            PolicyNetworkConnection.this.request.port = port;
-                            PolicyNetworkConnection.this.request.toRead = data[0].get(SS);
-                            PolicyNetworkConnection.this.request.lengthRead = true;
-                            addMessage(message, manual_listener_notify);
+                    if (data.length == 0 && PolicyNetworkConnection.this.request.host == null) {
+                        return;
+                    } else if (data.length == 0) {
+                        PolicyNetworkConnection.this.completeHeader(message, manual_listener_notify);
+                        return;
+                    }
+                    DirectByteBuffer queue = data[0];
+                    if (queue.remaining(SS) == 0) {
+                        for (int i = 1; i < data.length; i++) {
+                            data[i - 1] = data[i];
                         }
+                        data[data.length - 1] = null;
+                        addMessage(message, manual_listener_notify);
+                        return;
+                    }
+                    if (PolicyNetworkConnection.this.request.host != null) {
+                        PolicyNetworkConnection.this.completeHeader(message, manual_listener_notify);
                     } else {
-                        throw new NotImplementedException();
+                        int remaining = PolicyNetworkConnection.this.request.toRead;
+                        if (queue.remaining(SS) > remaining) {
+                            if (PolicyNetworkConnection.this.request.lengthRead) {
+                                byte[] addr = new byte[remaining];
+                                data[0].get(SS, addr);
+                                PolicyNetworkConnection.this.request.host = new String(addr);
+                                logger.finer("Host read as " + new String(addr));
+                                addMessage(message, manual_listener_notify);
+                            } else {
+                                int port = data[0].getShort(SS);
+                                logger.finer("Port read as " + port);
+                                PolicyNetworkConnection.this.request.port = port;
+                                PolicyNetworkConnection.this.request.toRead = data[0].get(SS);
+                                PolicyNetworkConnection.this.request.lengthRead = true;
+                                addMessage(message, manual_listener_notify);
+                           }
+                        } else {
+                           throw new NotImplementedException();
+                       }
                     }
                 }
             };

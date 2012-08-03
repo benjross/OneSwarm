@@ -568,6 +568,9 @@ public class DatagramConnection extends DatagramRateLimiter {
                         synchronized (messageQueue) {
                             if (messageQueue.isEmpty()) {
                                 messageQueue.wait();
+                                if (messageQueue.isEmpty()) {
+                                    continue;
+                                }
                             }
                             message = messageQueue.remove(0);
                             messageSize = message.getMessageSize();
