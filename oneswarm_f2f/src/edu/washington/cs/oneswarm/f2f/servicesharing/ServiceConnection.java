@@ -339,7 +339,7 @@ public class ServiceConnection implements ServiceChannelEndpointDelegate {
                 logger.warning("Incoming service message dropped, exceeded message buffer.");
                 return true;
             } else if (msg.getSequenceNumber() < serviceSequenceNumber) {
-                logger.info("Incoming service message dropped, already processed.");
+                logger.info("Incoming service message dropped, already processed [flow " + msg.getSubchannel() + " message " + msg.getSequenceNumber() + "]");
                 return true;
             } else {
                 DirectByteBuffer payload = msg.transferPayload();
@@ -584,6 +584,7 @@ public class ServiceConnection implements ServiceChannelEndpointDelegate {
             msgcpys.add(new DirectByteBuffer(cpy));
         }
         logger.finest("Message will attempt to send with replication " + channelsToUse.size());
+        int writtenCopies = 0;
         for (ServiceChannelEndpoint c : channelsToUse) {
             msg = msgcpys.remove(0);
             if (!c.isStarted()) {
@@ -599,13 +600,10 @@ public class ServiceConnection implements ServiceChannelEndpointDelegate {
                 }
                 mmt.sendMsg(msgId, c);
                 c.writeMessage(msgId, msg, FEATURES.contains(ServiceFeatures.UDP));
+                writtenCopies++;
             }
         }
-        if (msgId.getChannels().size() == 0) {
-            return false;
-        } else {
-            return true;
-        }
+        return writtenCopies > 0;
     }
 
     protected class ServerIncomingMessageListener implements MessageQueueListener {

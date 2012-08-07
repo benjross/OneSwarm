@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.gudy.azureus2.core3.util.DirectByteBuffer;
+import org.gudy.azureus2.core3.util.DirectByteBufferPool;
 
 import com.aelitis.azureus.core.networkmanager.ConnectionEndpoint;
 import com.aelitis.azureus.core.networkmanager.IncomingMessageQueue;
@@ -18,6 +19,7 @@ import com.aelitis.azureus.core.networkmanager.Transport;
 import com.aelitis.azureus.core.networkmanager.TransportBase;
 import com.aelitis.azureus.core.networkmanager.impl.tcp.ProtocolEndpointTCP;
 import com.aelitis.azureus.core.peermanager.messaging.Message;
+import com.aelitis.azureus.core.peermanager.messaging.MessageException;
 import com.aelitis.azureus.core.peermanager.messaging.MessageStreamEncoder;
 
 import edu.washington.cs.oneswarm.f2f.servicesharing.DataMessage.RawMessageDecoder;
@@ -173,50 +175,65 @@ public class PolicyNetworkConnection implements NetworkConnection {
                     throw new NotImplementedException();
                 }
 
+                private Message normalize(Message m) {
+                    DirectByteBuffer[] data = m.getData();
+                    int totalLength = 0;
+                    for (DirectByteBuffer d : data) {
+                        totalLength += d.remaining(SS);
+                    }
+                    DirectByteBuffer concatination = DirectByteBufferPool.getBuffer(SS, totalLength);
+                    for (DirectByteBuffer d : data) {
+                        concatination.put(SS, d);
+                    }
+                    concatination.flip(SS);
+                    return new DataMessage(concatination);
+                }
+
                 /**
                  * Construct network connection from an initial message.
                  */
                 @Override
                 public void addMessage(Message message, boolean manual_listener_notify) {
-                    DirectByteBuffer[] data = message.getData();
-                    if (data.length == 0 && PolicyNetworkConnection.this.request.host == null) {
-                        return;
-                    } else if (data.length == 0) {
-                        PolicyNetworkConnection.this.completeHeader(message, manual_listener_notify);
+                    if (connection != null) {
+                        logger.warning("PNC outgoing message queue in use after handoff.");
+                        connection.getOutgoingMessageQueue().addMessage(message, manual_listener_notify);
                         return;
                     }
-                    DirectByteBuffer queue = data[0];
-                    if (queue.remaining(SS) == 0) {
-                        for (int i = 1; i < data.length; i++) {
-                            data[i - 1] = data[i];
-                        }
-                        data[data.length - 1] = null;
-                        addMessage(message, manual_listener_notify);
+                    Message newMessage = normalize(message);
+                    DirectByteBuffer[] data = newMessage.getData();
+                    if (data.length == 0) {
                         return;
                     }
-                    if (PolicyNetworkConnection.this.request.host != null) {
-                        PolicyNetworkConnection.this.completeHeader(message, manual_listener_notify);
-                    } else {
-                        int remaining = PolicyNetworkConnection.this.request.toRead;
-                        if (queue.remaining(SS) > remaining) {
-                            if (PolicyNetworkConnection.this.request.lengthRead) {
-                                byte[] addr = new byte[remaining];
-                                data[0].get(SS, addr);
-                                PolicyNetworkConnection.this.request.host = new String(addr);
-                                logger.finer("Host read as " + new String(addr));
-                                addMessage(message, manual_listener_notify);
-                            } else {
-                                int port = data[0].getShort(SS);
-                                logger.finer("Port read as " + port);
-                                PolicyNetworkConnection.this.request.port = port;
-                                PolicyNetworkConnection.this.request.toRead = data[0].get(SS);
-                                PolicyNetworkConnection.this.request.lengthRead = true;
-                                addMessage(message, manual_listener_notify);
-                           }
-                        } else {
-                           throw new NotImplementedException();
-                       }
+                    
+                    DirectByteBuffer top = data[0];
+                    if (top.remaining(SS) == 0) {
+                        return;
                     }
+                    
+                    int remaining = PolicyNetworkConnection.this.request.toRead;
+                    if (top.remaining(SS) < remaining) {
+                        throw new NotImplementedException();
+                    }
+                    if (!PolicyNetworkConnection.this.request.lengthRead) {
+                        int port = top.getShort(SS);
+                        logger.finer("Port read as " + port);
+                        PolicyNetworkConnection.this.request.port = port;
+                        PolicyNetworkConnection.this.request.toRead = top.get(SS);
+                        PolicyNetworkConnection.this.request.lengthRead = true;
+                    }
+
+                    remaining = PolicyNetworkConnection.this.request.toRead;
+                    if (top.remaining(SS) == 0) {
+                        return;
+                    } else if (top.remaining(SS) < remaining) {
+                        throw new NotImplementedException();
+                    }
+                    
+                    byte[] addr = new byte[remaining];
+                    top.get(SS, addr);
+                    PolicyNetworkConnection.this.request.host = new String(addr);
+                    logger.finer("Host read as " + new String(addr));
+                    PolicyNetworkConnection.this.completeHeader(newMessage, manual_listener_notify);
                 }
             };
         } else {

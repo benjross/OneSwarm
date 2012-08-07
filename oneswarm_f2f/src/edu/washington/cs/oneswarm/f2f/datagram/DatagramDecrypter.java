@@ -89,6 +89,10 @@ public class DatagramDecrypter extends DatagramEncrytionBase {
         // Strip the padding
         decryptBuffer.position(decryptBuffer.limit() - 1);
         byte padLength = decryptBuffer.get();
+        if (padLength < 0 || padLength > decryptBuffer.limit()) {
+            logger.warning("Invalid padding length:" + padLength);
+            return false;
+        }
 
         decryptBuffer.position(decryptBuffer.limit() - padLength);
         for (int i = 0; i < padLength; i++) {

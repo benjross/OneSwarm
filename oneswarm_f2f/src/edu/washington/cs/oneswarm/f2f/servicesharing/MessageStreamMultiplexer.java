@@ -63,8 +63,14 @@ public class MessageStreamMultiplexer {
         for (SequenceNumber seq : numbers) {
             seq.ack();
             for (Integer channelId : seq.getChannels()) {
-                if (this.channels.get(channelId).forgetMessage(seq)) {
-                    channelOutstanding.get(channelId).remove(seq);
+                ServiceChannelEndpoint sce = this.channels.get(channelId);
+                if (sce == null) {
+                    seq.removeChannel(channelId);
+                } else if (sce.forgetMessage(seq)) {
+                    Set<SequenceNumber> olist = channelOutstanding.get(channelId);
+                    if (olist != null) {
+                        olist.remove(seq);
+                    }
                     seq.removeChannel(channelId);
                 }
             }

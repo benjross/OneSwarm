@@ -80,21 +80,25 @@ public class ServiceChannelEndpoint extends OverlayEndpoint {
 
     public void addDelegate(ServiceChannelEndpointDelegate d, short flow) {
         Short flowObj = new Short(flow);
-        if (d.writesMessages()) {
-            this.delegateOrder.add(flowObj);
+        synchronized(this.delegates) {
+            if (d.writesMessages()) {
+                this.delegateOrder.add(flowObj);
+            }
+            this.delegates.put(flowObj, d);
         }
-        this.delegates.put(flowObj, d);
         if (friendConnection.isReadyForWrite(null)) {
             d.channelIsReady(this);
         }
     }
 
     public void removeDelegate(ServiceChannelEndpointDelegate d) {
-        for (Short flow : this.delegates.keySet()) {
-            if (this.delegates.get(flow).equals(d)) {
-                this.delegates.remove(flow);
-                this.delegateOrder.remove(flow);
-                break;
+        synchronized(this.delegates) {
+            for (Short flow : this.delegates.keySet()) {
+                if (this.delegates.get(flow).equals(d)) {
+                    this.delegates.remove(flow);
+                    this.delegateOrder.remove(flow);
+                    break;
+                }
             }
         }
     }
@@ -106,23 +110,25 @@ public class ServiceChannelEndpoint extends OverlayEndpoint {
 
     public int getWriteCapacity(ServiceChannelEndpointDelegate d) {
         int networkCapacity = friendConnection.getSendQueueCurrentCapacity(this.channelId);
-        int fullPackets = networkCapacity / (this.delegates.size() * MAX_SERVICE_MESSAGE_SIZE);
+        synchronized(this.delegates) {
+            int fullPackets = networkCapacity / (this.delegates.size() * MAX_SERVICE_MESSAGE_SIZE);
 
-        int delegatePriority = this.delegates.size();
-        for (Short flow : this.delegates.keySet()) {
-            if (this.delegates.get(flow).equals(d)) {
-                delegatePriority = this.delegateOrder.indexOf(flow);
+            int delegatePriority = this.delegates.size();
+            for (Short flow : this.delegates.keySet()) {
+                if (this.delegates.get(flow).equals(d)) {
+                    delegatePriority = this.delegateOrder.indexOf(flow);
+                }
             }
-        }
 
-        networkCapacity -= fullPackets * this.delegates.size() * MAX_SERVICE_MESSAGE_SIZE
+            networkCapacity -= fullPackets * this.delegates.size() * MAX_SERVICE_MESSAGE_SIZE
                 + delegatePriority * MAX_SERVICE_MESSAGE_SIZE;
 
-        if (networkCapacity >= MAX_SERVICE_MESSAGE_SIZE) {
-            fullPackets += 1;
-        }
+            if (networkCapacity >= MAX_SERVICE_MESSAGE_SIZE) {
+                fullPackets += 1;
+            }
 
-        return fullPackets * MAX_SERVICE_MESSAGE_SIZE;
+            return fullPackets * MAX_SERVICE_MESSAGE_SIZE;
+        }
     }
 
     @Override
@@ -180,7 +186,14 @@ public class ServiceChannelEndpoint extends OverlayEndpoint {
                     new int[] { newMessage.getSequenceNumber() }, newMessage.isDatagram()));
         }
 
-        for (ServiceChannelEndpointDelegate d : this.delegates.values()) {
+        ArrayList<ServiceChannelEndpointDelegate> delegateCache;
+        synchronized(this.delegates) {
+          delegateCache = new ArrayList<ServiceChannelEndpointDelegate>(this.delegates.size());
+          for (ServiceChannelEndpointDelegate d : this.delegates.values()) {
+              delegateCache.add(d);
+          }
+        }
+        for (ServiceChannelEndpointDelegate d : delegateCache) {
             if (d.channelGotMessage(this, newMessage)) {
                 break;
             }
@@ -198,13 +211,15 @@ public class ServiceChannelEndpoint extends OverlayEndpoint {
     public void writeMessage(final SequenceNumber num, DirectByteBuffer buffer, boolean datagram) {
         // Move the requester to the bottom of the priority list.
         Short flowObj = new Short(num.getFlow());
-        try {
-            this.delegateOrder.remove(flowObj);
-        } catch (IndexOutOfBoundsException e) {
-            logger.warning("Unknown message sender:" + flowObj);
-            return;
+        synchronized(this.delegates) {
+            try {
+                this.delegateOrder.remove(flowObj);
+            } catch (IndexOutOfBoundsException e) {
+                logger.warning("Unknown message sender:" + flowObj);
+                return;
+            }
+            this.delegateOrder.add(flowObj);
         }
-        this.delegateOrder.add(flowObj);
 
         boolean rst = buffer == null;
         if (buffer == null) {
@@ -236,14 +251,18 @@ public class ServiceChannelEndpoint extends OverlayEndpoint {
 
         double retransmit = RETRANSMISSION_MIN + (RETRANSMISSION_MAX - RETRANSMISSION_MIN)
                 * Math.random();
+        long currentCreation = msg.creation;
+        msg.creation = System.currentTimeMillis();
         // Remember the message may need to be retransmitted.
-        delayedExecutor.queue((long) (retransmit * this.latency * (1 << msg.attempt)), msg);
+        long delay = (long) (retransmit * this.latency * (1 << msg.attempt));
+        logger.finest("retransmit queued in " + delay + "ms based on " + this.latency + " latency at attempt " + msg.attempt);
+        delayedExecutor.queue(delay, msg);
 
-        if (msg.attempt > 0 && msg.creation + latency > System.currentTimeMillis()) {
-            logger.warning("Skipping over-aggresive retransmission.");
+        if (msg.attempt > 0 && currentCreation + latency > System.currentTimeMillis()) {
+            msg.creation = currentCreation;
+            logger.warning("Skipping over-aggresive retransmission of " + num.toString());
             return;
         }
-        msg.creation = System.currentTimeMillis();
 
         // Outgoing msg will be freed by super.writeMessage.
         msg.msg.incrementReferenceCount();
@@ -327,6 +346,9 @@ public class ServiceChannelEndpoint extends OverlayEndpoint {
                         m.run();
                     }
                 }
+            } else {
+                // Increase latency if we're loosing packets
+                this.latency = (long) (this.latency * (1 - EWMA) + 2 * this.latency * EWMA);
             }
         }
 
@@ -370,6 +392,11 @@ public class ServiceChannelEndpoint extends OverlayEndpoint {
                 }
                 // Don't retransmit RST messages.
                 if (rst) {
+                    msg.returnToPool();
+                    return;
+                }
+                // Don't retransmit Ack'ed messages.
+                if (num.isAcked()) {
                     msg.returnToPool();
                     return;
                 }
