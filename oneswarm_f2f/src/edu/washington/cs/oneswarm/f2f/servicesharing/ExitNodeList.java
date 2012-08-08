@@ -1,6 +1,11 @@
 package edu.washington.cs.oneswarm.f2f.servicesharing;
 
-import java.io.Serializable;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -10,22 +15,61 @@ import java.util.Random;
 
 import org.gudy.azureus2.core3.config.COConfigurationManager;
 
-public class ExitNodeList implements Serializable {
+public class ExitNodeList {
     // Singleton Pattern.
     private final static ExitNodeList instance = new ExitNodeList();
-    private static final long serialVersionUID = -7232513344463947878L;
     private static final String LOCAL_SERVICE_KEY_CONFIG_KEY = "DISTINGUISHED_SHARED_SERVICE_KEY";
-    
-    public static ExitNodeList getInstance() {
-        return instance;
-    }
+    private static final long KEEPALIVE_INTERVAL = 55 * 60 * 1000;
 
     private final List<ExitNodeInfo> exitNodeList;
-    private Map<Long, ExitNodeInfo> localSharedExitServices;
+    private final Map<Long, ExitNodeInfo> localSharedExitServices;
 
     private ExitNodeList() {
+        // Timer keepAliveRegistrations = new Timer();
+        // keepAliveRegistrations.schedule(new TimerTask() {
+        // @Override
+        // public void run() {
+        // ExitNodeList.this.registerExitNodes();
+        // // Check the response for errors.
+        // }
+        // }, 0, KEEPALIVE_INTERVAL);
+        // // TODO (nick) keepAliveRegistrations.schedule(task, delay, period);
         this.exitNodeList = new LinkedList<ExitNodeInfo>();
         this.localSharedExitServices = new HashMap<Long, ExitNodeInfo>();
+    }
+
+    public void registerExitNodes() throws IOException {
+        URL server = new URL("http://127.0.0.1:7888/?action=register");
+        HttpURLConnection req = (HttpURLConnection) server.openConnection();
+
+        req.setDoInput(true);
+        req.setDoOutput(true);
+        req.setUseCaches(false);
+        req.setRequestProperty("Content-Type", "text/plain");
+
+        String output = "";
+        for (ExitNodeInfo node : localSharedExitServices.values()) {
+            output += node.fullXML() + "\n";
+        }
+        output = XML.HEADER + XML.tag(XML.EXIT_NODE_LIST, output);
+
+        System.out.println(output);
+        OutputStream out = req.getOutputStream();
+        out.write(output.getBytes("UTF-8"));
+        out.flush();
+
+        System.out.println("===================");
+        BufferedReader in = new BufferedReader(new InputStreamReader(req.getInputStream()));
+        String line;
+        while ((line = in.readLine()) != null) {
+            System.out.println(line);
+        }
+        in.close();
+        System.out.println("===================");
+    }
+
+    public static ExitNodeList getInstance() {
+        return instance;
     }
 
     public void addNodes(ExitNodeInfo[] exitNodes) {
@@ -53,10 +97,11 @@ public class ExitNodeList implements Serializable {
         }
         return null;
     }
-    
+
     /**
      * Get (and generate if it does not yet exist) a distinguished key for this
      * machine's locally shared service.
+     * 
      * @return The local shared service key.
      */
     public long getLocalServiceKey() {
@@ -69,16 +114,17 @@ public class ExitNodeList implements Serializable {
         }
         return serviceKey;
     }
-    
+
     /**
-     * Reset the locally shared service key, in case the node wishes to change identity.
+     * Reset the locally shared service key, in case the node wishes to change
+     * identity.
      */
     public void resetLocalServiceKey() {
         COConfigurationManager.setParameter(LOCAL_SERVICE_KEY_CONFIG_KEY, 0L);
     }
 
-    public void setExitNodeSharedService(long serviceId, ExitNodeInfo exitNode) {
-        localSharedExitServices.put(serviceId, exitNode);
+    public void setExitNodeSharedService(ExitNodeInfo exitNode) {
+        localSharedExitServices.put(exitNode.getId(), exitNode);
     }
 
     public void removeExitNodeSharedService(long serviceId) {
