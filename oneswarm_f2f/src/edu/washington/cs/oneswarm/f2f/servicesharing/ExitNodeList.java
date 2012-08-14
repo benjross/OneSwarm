@@ -1,9 +1,7 @@
 package edu.washington.cs.oneswarm.f2f.servicesharing;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collections;
@@ -13,7 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.apache.xml.serialize.OutputFormat;
+import org.apache.xml.serialize.XMLSerializer;
 import org.gudy.azureus2.core3.config.COConfigurationManager;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
 
 public class ExitNodeList {
     // Singleton Pattern.
@@ -23,13 +25,12 @@ public class ExitNodeList {
     // TODO (nick) decide where this should be saved / edited by user... Azureus
     // Conf with UI in Ben's setting panel?
     // TODO (nick) should it publish to one, or a list of servers?
-    private static String ExitNodeDirectoryUrl;
+    private String ExitNodeDirectoryUrl;
 
     private final List<ExitNodeInfo> exitNodeList;
     private final Map<Long, ExitNodeInfo> localSharedExitServices;
 
     private ExitNodeList() {
-        ExitNodeDirectoryUrl = "http://127.0.0.1:7888/";
         // TODO (nick) Uncomment to enable regular updates once debugging is
         // done.
 
@@ -73,6 +74,10 @@ public class ExitNodeList {
             }
         }
         return null;
+    }
+
+    public void setDirectoryServer(String url) {
+        ExitNodeDirectoryUrl = url;
     }
 
     /**
@@ -122,48 +127,33 @@ public class ExitNodeList {
         }
     }
 
-    public void registerExitNodes() throws IOException {
-
-        // StringBuilder output = new StringBuilder();
-        // for (ExitNodeInfo node : localSharedExitServices.values()) {
-        // // TODO (nick) Remove newline
-        // output.append(node.fullXML() + "\n");
-        // }
-        // output = XMLConstants.tag(XMLConstants.EXIT_NODE_LIST,
-        // output).insert(0, XMLConstants.HEADER);
-        //
-        // StringBuilder response = sendToServer(ExitNodeDirectoryUrl +
-        // "?action=register", output);
-        //
-        // //TODO (nick) Debug only
-        // System.out.println(response.toString());
-        //
-        // //TODO (nick) un psuedo
-        // output = new StringBuilder();
-        // for(resp that contains error){
-        //
-        // }
-    }
-
-    private InputStream sendToServer(String serverUrl, StringBuilder body) throws IOException {
-        StringBuilder response = new StringBuilder();
-        URL server = new URL(serverUrl);
+    // TODO (nick) remove suppress warnings
+    @SuppressWarnings("deprecation")
+    public void registerExitNodes() throws IOException, SAXException {
+        // Setup connection to Directory Server
+        URL server = new URL(ExitNodeDirectoryUrl + "?action=register");
         HttpURLConnection req = (HttpURLConnection) server.openConnection();
         req.setDoInput(true);
         req.setDoOutput(true);
         req.setUseCaches(false);
         req.setRequestProperty("Content-Type", "text/xml");
-
         OutputStream out = req.getOutputStream();
 
-        try {
-            out.write(body.toString().getBytes(XMLConstants.ENCODING));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+        // Set up XML Writer
+        OutputFormat of = new OutputFormat("XML", XMLConstants.ENCODING, true);
+        of.setIndent(1);
+        of.setIndenting(true);
+        XMLSerializer serializer = new XMLSerializer(out, of);
+        ContentHandler hd = serializer.asContentHandler();
+
+        for (ExitNodeInfo node : localSharedExitServices.values()) {
+            node.fullXML(hd);
         }
 
-        out.flush();
-
-        return req.getInputStream();
+        // TODO (nick) un-psuedo this code
+        // output = new StringBuilder();
+        // for(resp that contains error){
+        // registerInsteadOfCheckIn(node, hd);
+        // }
     }
 }
