@@ -1,9 +1,9 @@
 package edu.washington.cs.oneswarm.f2f.servicesharing;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collections;
@@ -20,11 +20,19 @@ public class ExitNodeList {
     private final static ExitNodeList instance = new ExitNodeList();
     private static final String LOCAL_SERVICE_KEY_CONFIG_KEY = "DISTINGUISHED_SHARED_SERVICE_KEY";
     private static final long KEEPALIVE_INTERVAL = 55 * 60 * 1000;
+    // TODO (nick) decide where this should be saved / edited by user... Azureus
+    // Conf with UI in Ben's setting panel?
+    // TODO (nick) should it publish to one, or a list of servers?
+    private static String ExitNodeDirectoryUrl;
 
     private final List<ExitNodeInfo> exitNodeList;
     private final Map<Long, ExitNodeInfo> localSharedExitServices;
 
     private ExitNodeList() {
+        ExitNodeDirectoryUrl = "http://127.0.0.1:7888/";
+        // TODO (nick) Uncomment to enable regular updates once debugging is
+        // done.
+
         // Timer keepAliveRegistrations = new Timer();
         // keepAliveRegistrations.schedule(new TimerTask() {
         // @Override
@@ -33,39 +41,8 @@ public class ExitNodeList {
         // // Check the response for errors.
         // }
         // }, 0, KEEPALIVE_INTERVAL);
-        // // TODO (nick) keepAliveRegistrations.schedule(task, delay, period);
         this.exitNodeList = new LinkedList<ExitNodeInfo>();
         this.localSharedExitServices = new HashMap<Long, ExitNodeInfo>();
-    }
-
-    public void registerExitNodes() throws IOException {
-        URL server = new URL("http://127.0.0.1:7888/?action=register");
-        HttpURLConnection req = (HttpURLConnection) server.openConnection();
-
-        req.setDoInput(true);
-        req.setDoOutput(true);
-        req.setUseCaches(false);
-        req.setRequestProperty("Content-Type", "text/plain");
-
-        String output = "";
-        for (ExitNodeInfo node : localSharedExitServices.values()) {
-            output += node.fullXML() + "\n";
-        }
-        output = XML.HEADER + XML.tag(XML.EXIT_NODE_LIST, output);
-
-        System.out.println(output);
-        OutputStream out = req.getOutputStream();
-        out.write(output.getBytes("UTF-8"));
-        out.flush();
-
-        System.out.println("===================");
-        BufferedReader in = new BufferedReader(new InputStreamReader(req.getInputStream()));
-        String line;
-        while ((line = in.readLine()) != null) {
-            System.out.println(line);
-        }
-        in.close();
-        System.out.println("===================");
     }
 
     public static ExitNodeList getInstance() {
@@ -143,5 +120,50 @@ public class ExitNodeList {
         } else {
             return false;
         }
+    }
+
+    public void registerExitNodes() throws IOException {
+
+        // StringBuilder output = new StringBuilder();
+        // for (ExitNodeInfo node : localSharedExitServices.values()) {
+        // // TODO (nick) Remove newline
+        // output.append(node.fullXML() + "\n");
+        // }
+        // output = XMLConstants.tag(XMLConstants.EXIT_NODE_LIST,
+        // output).insert(0, XMLConstants.HEADER);
+        //
+        // StringBuilder response = sendToServer(ExitNodeDirectoryUrl +
+        // "?action=register", output);
+        //
+        // //TODO (nick) Debug only
+        // System.out.println(response.toString());
+        //
+        // //TODO (nick) un psuedo
+        // output = new StringBuilder();
+        // for(resp that contains error){
+        //
+        // }
+    }
+
+    private InputStream sendToServer(String serverUrl, StringBuilder body) throws IOException {
+        StringBuilder response = new StringBuilder();
+        URL server = new URL(serverUrl);
+        HttpURLConnection req = (HttpURLConnection) server.openConnection();
+        req.setDoInput(true);
+        req.setDoOutput(true);
+        req.setUseCaches(false);
+        req.setRequestProperty("Content-Type", "text/xml");
+
+        OutputStream out = req.getOutputStream();
+
+        try {
+            out.write(body.toString().getBytes(XMLConstants.ENCODING));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        out.flush();
+
+        return req.getInputStream();
     }
 }

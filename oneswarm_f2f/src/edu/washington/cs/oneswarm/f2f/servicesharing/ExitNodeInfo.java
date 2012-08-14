@@ -10,6 +10,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
+
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 
 import edu.uw.cse.netlab.reputation.LocalIdentity;
@@ -17,7 +20,7 @@ import edu.uw.cse.netlab.reputation.LocalIdentity;
 public class ExitNodeInfo implements Comparable<ExitNodeInfo> {
     // Publicly available info
     private String nickname;
-    private long serviceId;
+    private final long serviceId;
     private PublicKey publicKey;
     private PrivateKey privateKey;
     private byte[] ipAddr;
@@ -32,10 +35,6 @@ public class ExitNodeInfo implements Comparable<ExitNodeInfo> {
     private int avgBandwidth; // Stored avg of history (KB/s)
     private Queue<Integer> latencyHistory;
     private int avgLatency; // Stored avg of history (ms)
-
-    public ExitNodeInfo() {
-        this("", 0l, 0, new String[] {}, new Date(), "");
-    }
 
     public ExitNodeInfo(String nickname, long id, int advertBandwidth, String[] exitPolicy,
             Date onlineSince, String version) {
@@ -107,14 +106,6 @@ public class ExitNodeInfo implements Comparable<ExitNodeInfo> {
         return serviceId;
     }
 
-    public void setId(long serviceId) {
-        this.serviceId = serviceId;
-    }
-
-    public PublicKey getPublicKey() {
-        return this.publicKey;
-    }
-
     /**
      * Returns public key as String.
      * 
@@ -124,44 +115,6 @@ public class ExitNodeInfo implements Comparable<ExitNodeInfo> {
     public String getPublicKeyString() {
         return this.publicKey.getAlgorithm() + ":" + this.publicKey.getFormat() + ":"
                 + Base64.encode(this.publicKey.getEncoded());
-    }
-
-    /**
-     * @see <code>this.getPublicKey()</code> for format.
-     * @param publicKey
-     */
-    public void setPublicKey(String publicKey) {
-        this.publicKey = decodeKey(publicKey);
-    }
-
-    /**
-     * @see <code>this.getPublicKey()</code> for format.
-     * @param privateKey
-     */
-    public void setPrivateKey(String privateKey) {
-        this.privateKey = (PrivateKey) decodeKey(privateKey);
-    }
-
-    private PublicKey decodeKey(String key) {
-        final String[] parts = key.split(":");
-        return new PublicKey() {
-            private static final long serialVersionUID = 4008509182035615274L;
-
-            @Override
-            public String getAlgorithm() {
-                return parts[0];
-            }
-
-            @Override
-            public String getFormat() {
-                return parts[1];
-            }
-
-            @Override
-            public byte[] getEncoded() {
-                return Base64.decode(parts[2]);
-            }
-        };
     }
 
     public int getAdvertizedBandwith() {
@@ -233,7 +186,7 @@ public class ExitNodeInfo implements Comparable<ExitNodeInfo> {
         try {
             return (this.getPublicKeyString() + this.nickname + this.advertizedBandwidth
                     + this.exitPolicy.toString() + this.onlineSince + this.version)
-                    .getBytes("UTF-8");
+                    .getBytes(XMLConstants.ENCODING);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -252,30 +205,45 @@ public class ExitNodeInfo implements Comparable<ExitNodeInfo> {
         return null;
     }
 
-    public String fullXML() {
-        return XML.tag(
-                XML.EXIT_NODE,
-                XML.tag(XML.SERVICE_ID, "" + this.serviceId)
-                        + XML.tag(XML.PUBLIC_KEY, this.getPublicKeyString())
-                        + XML.tag(XML.NICKNAME, this.nickname)
-                        + XML.tag(XML.BANDWIDTH, "" + this.advertizedBandwidth)
-                        + XML.tag(XML.EXIT_POLICY, this.exitPolicy.toString())
-                        + XML.tag(XML.ONLINE_SINCE, "" + this.onlineSince)
-                        + XML.tag(XML.VERSION, this.version)
-                        + XML.tag(XML.SIGNATURE, this.signature()));
+    public void fullXML(ContentHandler hd) throws SAXException {
+        hd.startElement("", "", XMLConstants.EXIT_NODE, null);
+        addKey(hd, XMLConstants.SERVICE_ID, Long.toString(serviceId));
+        addKey(hd, XMLConstants.PUBLIC_KEY, getPublicKeyString());
+        addKey(hd, XMLConstants.NICKNAME, nickname);
+        addKey(hd, XMLConstants.BANDWIDTH, "" + advertizedBandwidth);
+        addKey(hd, XMLConstants.EXIT_POLICY, exitPolicy.toString());
+        addKey(hd, XMLConstants.VERSION, version);
+        hd.startElement("", "", XMLConstants.SIGNATURE, null);
+        StringBuffer usb = new StringBuffer();
+        String signature = this.signature();
+        usb.append(signature, 0, signature.length());
+        char[] sig = usb.toString().toCharArray();
+        hd.characters(sig, 0, sig.length);
+        hd.endElement("", "", XMLConstants.SIGNATURE);
+
+        hd.endElement("", "", XMLConstants.EXIT_NODE);
     }
 
-    public String shortXML() {
-        return XML.tag(
-                XML.EXIT_NODE,
-                XML.tag(XML.SERVICE_ID, "" + this.serviceId)
-                        + XML.tag(XML.PUBLIC_KEY, this.getPublicKeyString())
-                        + XML.tag(XML.SIGNATURE, this.signature()));
+    public void shortXML(ContentHandler hd) throws SAXException {
+        hd.startElement("", "", XMLConstants.EXIT_NODE, null);
+        addKey(hd, XMLConstants.SERVICE_ID, Long.toString(serviceId));
+        addKey(hd, XMLConstants.PUBLIC_KEY, getPublicKeyString());
+        hd.startElement("", "", XMLConstants.SIGNATURE, null);
+        StringBuffer usb = new StringBuffer();
+        String signature = this.signature();
+        usb.append(signature, 0, signature.length());
+        char[] sig = usb.toString().toCharArray();
+        hd.characters(sig, 0, sig.length);
+        hd.endElement("", "", XMLConstants.SIGNATURE);
+
+        hd.endElement("", "", XMLConstants.EXIT_NODE);
     }
 
-    @Override
-    public String toString() {
-        return fullXML();
+    private void addKey(ContentHandler hd, String key, String value) throws SAXException {
+        hd.startElement("", "", key, null);
+        char[] valArray = value.toCharArray();
+        hd.characters(valArray, 0, valArray.length);
+        hd.endElement("", "", key);
     }
 
     private static class PolicyTree {

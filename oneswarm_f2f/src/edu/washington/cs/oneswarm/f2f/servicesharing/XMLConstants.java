@@ -1,9 +1,7 @@
 package edu.washington.cs.oneswarm.f2f.servicesharing;
 
-public class XML {
-
-    // XML Header and Root Element
-    public static final String HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+public class XMLConstants {
+    public static final String ENCODING = "UTF-8";
     public static final String EXIT_NODE_LIST = "ExitNodeList";
 
     // ExitNode information
@@ -20,8 +18,4 @@ public class XML {
     // Errors
     public static final String GENERAL_ERROR = "Error";
     public static final String NODE_ERROR = "NodeError";
-
-    public static String tag(String tag, String text) {
-        return "<" + tag + ">" + text + "</" + tag + ">";
-    }
 }
