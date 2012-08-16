@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 import org.gudy.azureus2.core3.config.COConfigurationManager;
 import org.xml.sax.SAXException;
 
+import edu.washington.cs.oneswarm.f2f.xml.DirectoryServerMsgHandler;
 import edu.washington.cs.oneswarm.f2f.xml.XMLHelper;
 
 public class ExitNodeList {
