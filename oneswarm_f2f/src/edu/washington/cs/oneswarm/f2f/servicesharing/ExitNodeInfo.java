@@ -101,6 +101,21 @@ public class ExitNodeInfo implements Comparable<ExitNodeInfo> {
         return thisBandwidth - otherBandwidth;
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        } else if (other instanceof ExitNodeInfo) {
+            return this.serviceId == ((ExitNodeInfo) other).serviceId;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) serviceId;
+    }
+
     public String getNickname() {
         return nickname;
     }
