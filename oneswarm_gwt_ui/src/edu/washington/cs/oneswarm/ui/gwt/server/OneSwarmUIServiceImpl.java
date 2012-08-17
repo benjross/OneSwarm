@@ -104,6 +104,8 @@ import edu.washington.cs.oneswarm.f2f.multisource.Sha1HashManager;
 import edu.washington.cs.oneswarm.f2f.permissions.GroupBean;
 import edu.washington.cs.oneswarm.f2f.permissions.PermissionsDAO;
 import edu.washington.cs.oneswarm.f2f.servicesharing.ClientService;
+import edu.washington.cs.oneswarm.f2f.servicesharing.ExitNodeInfo;
+import edu.washington.cs.oneswarm.f2f.servicesharing.ExitNodeList;
 import edu.washington.cs.oneswarm.f2f.servicesharing.ServiceSharingManager;
 import edu.washington.cs.oneswarm.f2f.share.ShareManagerTools;
 import edu.washington.cs.oneswarm.ui.gwt.BackendErrorLog;
@@ -4223,5 +4225,50 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
             throw new RuntimeException("invalid cookie");
         }
     }
+    
+    public void getNewServiceKey() {
+        ExitNodeList.getInstance().resetLocalServiceKey();
+    }
+    
+    public void setExitNodeSharedService(String exitNodes) {
+        ExitNodeList instance = ExitNodeList.getInstance();
+        long key = instance.getLocalServiceKey();
+        instance.getExitNodeSharedService(key).setExitPolicy(exitNodes.split("\\r?\\n"));
+    }
+    
+    public LinkedList<String> getExitPolicyStrings() {
+        ExitNodeList instance = ExitNodeList.getInstance();
+        long key = instance.getLocalServiceKey();
+        return instance.getExitNodeSharedService(key).getPolicyStrings();
+        
+    }
 
+    @Override
+    public String getNickname() {
+        ExitNodeList instance = ExitNodeList.getInstance();
+        long key = instance.getLocalServiceKey();
+        return instance.getExitNodeSharedService(key).getNickname();
+    }
+    
+    public void setNickname(String nickname) {
+        ExitNodeList instance = ExitNodeList.getInstance();
+        long key = instance.getLocalServiceKey();
+        instance.getExitNodeSharedService(key).setNickname(nickname);
+    }
+    
+    public LinkedList<String> getPresetPolicy(String sender) {
+//        ExitNodeList instance = ExitNodeList.getInstance();
+//        long key = instance.getLocalServiceKey();
+//        ExitNodeInfo exit =  instance.getExitNodeSharedService(key);
+//        
+        if (sender.equals("everything")) {
+            return ExitNodeInfo.EVERYTHING;
+        } else if (sender.equals("local")) {
+            return ExitNodeInfo.LOCAL;
+        } else if (sender.equals("safe")) {
+            return ExitNodeInfo.SAFE;
+        } else {
+            return getExitPolicyStrings();
+        }
+    }
 }

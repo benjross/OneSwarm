@@ -72,7 +72,7 @@ public class ExitNodeList {
     public static ExitNodeList getInstance() {
         return instance;
     }
-
+    
     public void addNodes(ExitNodeInfo[] exitNodes) {
         for (ExitNodeInfo server : exitNodes) {
             this.exitNodeList.add(server);
@@ -89,7 +89,7 @@ public class ExitNodeList {
         // No need to sort a sorted set
         // TODO (nick) serialize and save list to disk
     }
-
+    
     public ExitNodeInfo pickServer(String url, int port) {
         for (ExitNodeInfo server : exitNodeList) {
             if (server.allowsConnectionTo(url, port)) {
@@ -144,6 +144,10 @@ public class ExitNodeList {
 
     public boolean isExitNodeSharedService(long serviceId) {
         return localSharedExitServices.containsKey(serviceId);
+    }
+    
+    public ExitNodeInfo getExitNodeSharedService(long serviceId) {
+        return localSharedExitServices.get(serviceId);  //TODO(ben) does this have a default? 
     }
 
     public boolean allowLocalExitConnection(long serviceId, String address, int port) {

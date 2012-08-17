@@ -5,9 +5,11 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Queue;
 
 import org.xml.sax.SAXException;
@@ -35,6 +37,17 @@ public class ExitNodeInfo implements Comparable<ExitNodeInfo> {
     private int avgBandwidth; // Stored avg of history (KB/s)
     private Queue<Integer> latencyHistory;
     private int avgLatency; // Stored avg of history (ms)
+    
+    public static final LinkedList<String> EVERYTHING =  new LinkedList<String>(Arrays.asList("allow *:*"));
+    public static final LinkedList<String> LOCAL =  new LinkedList<String>(Arrays.asList("allow localhost:80"));
+    // TODO(willscott): Expand this list.
+    public static final LinkedList<String> SAFE =  new LinkedList<String>(Arrays.asList(
+            "allow google.com:*",
+            "allow *.google.com:*",
+            "allow gmail.com:*",
+            "allow googleusercontent.com:*",
+            "allow wikipedia.org:*",
+            "allow *.wikipedia.org:*"));
 
     public ExitNodeInfo(String nickname, long id, int advertBandwidth, String[] exitPolicy,
             Date onlineSince, String version) {
@@ -60,6 +73,7 @@ public class ExitNodeInfo implements Comparable<ExitNodeInfo> {
     public ExitNodeInfo() {
         this("INVALID", 0, 0, new String[] { "reject *:*" }, null, "INVALID");
     }
+    
 
     /**
      * Sets the exit policy of the server using Tor's notation.
@@ -100,6 +114,15 @@ public class ExitNodeInfo implements Comparable<ExitNodeInfo> {
         }
         return thisBandwidth - otherBandwidth;
     }
+    
+    public LinkedList<String> getPolicyStrings() {
+        LinkedList<String> policies = new LinkedList<String>();
+        ListIterator<edu.washington.cs.oneswarm.f2f.servicesharing.ExitNodeInfo.PolicyTree.PolicyNode> itr = exitPolicy.root.children.listIterator();
+        while(itr.hasNext()) {
+            policies.add(itr.next().toString());
+        }
+        return policies;
+    }
 
     @Override
     public boolean equals(Object other) {
@@ -119,7 +142,7 @@ public class ExitNodeInfo implements Comparable<ExitNodeInfo> {
     public String getNickname() {
         return nickname;
     }
-
+    
     public void setNickname(String nickname) {
         this.nickname = nickname;
     }

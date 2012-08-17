@@ -5,7 +5,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import edu.washington.cs.oneswarm.ui.gwt.client.OneSwarmGWT;
 import edu.washington.cs.oneswarm.ui.gwt.client.i18n.OSMessages;
 
-abstract class SettingsPanel extends VerticalPanel {
+public abstract class SettingsPanel extends VerticalPanel {
     protected final static OSMessages msg = OneSwarmGWT.msg;
 
     private boolean ready_save = false;
@@ -18,7 +18,7 @@ abstract class SettingsPanel extends VerticalPanel {
         ready_save = true;
     }
 
-    abstract public void sync();
+    abstract void sync();
 
     abstract String validData();
 }
