@@ -160,11 +160,13 @@ public class SettingsDialog extends OneSwarmDialogBox {
         
         VerticalPanel adminTab = new VerticalPanel();
         adminTab.add(nicknamePanel);
-        adminTab.add(serviceStatsPanel);
-        adminTab.add(exitPolicyPanel);
 
-        DisclosurePanel exitPolicyDisclosurePanel = new DisclosurePanel("exit polict");  //TODO (ben) msg.settings_tab_admin_exit_policy()
+        DisclosurePanel exitPolicyDisclosurePanel = new DisclosurePanel("exit policy");  //TODO (ben) msg.settings_tab_admin_exit_policy()
         exitPolicyDisclosurePanel.setOpen(false);
+       
+        exitPolicyDisclosurePanel.add(exitPolicyPanel);
+        adminTab.add(exitPolicyDisclosurePanel);
+        adminTab.add(serviceStatsPanel);
         
         mTabs.add(adminTab, "admin"); //TODO (ben) msg.settings_tab_network()
 

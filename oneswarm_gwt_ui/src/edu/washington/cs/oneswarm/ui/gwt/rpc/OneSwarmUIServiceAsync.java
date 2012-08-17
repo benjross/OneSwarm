@@ -2,10 +2,13 @@ package edu.washington.cs.oneswarm.ui.gwt.rpc;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+import edu.washington.cs.oneswarm.f2f.servicesharing.ExitNodeInfo;
+import edu.washington.cs.oneswarm.f2f.servicesharing.ExitNodeList;
 import edu.washington.cs.oneswarm.ui.gwt.rpc.OneSwarmConstants.SecurityLevel;
 
 public interface OneSwarmUIServiceAsync {
@@ -327,4 +330,16 @@ public interface OneSwarmUIServiceAsync {
     void removeClientService(String session, long id, AsyncCallback<Void> callback);
 
     void activateClientService(String session, String name, long id, AsyncCallback<String> callback);
+
+    void getNewServiceKey(AsyncCallback<Void> asyncCallback);
+
+    void setExitNodeSharedService(String exitNodes, AsyncCallback<Void> callback);
+
+    void getExitPolicyStrings(AsyncCallback<LinkedList<String>> callback);
+
+    void getNickname(AsyncCallback<String> callback);
+
+    void setNickname(String nickname, AsyncCallback<Void> callback);
+
+    void getPresetPolicy(String sender, AsyncCallback<LinkedList<String>> asyncCallback);
 }

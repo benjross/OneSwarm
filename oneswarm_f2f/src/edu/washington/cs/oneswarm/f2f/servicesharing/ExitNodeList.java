@@ -2,6 +2,7 @@ package edu.washington.cs.oneswarm.f2f.servicesharing;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -29,13 +30,8 @@ public class ExitNodeList implements Serializable {
     private ExitNodeList() {
         this.exitNodeList = new LinkedList<ExitNodeInfo>();
         // TODO (nick) do disk io
-        this.clientExitNodeInfo = ExitNodeInfo.getSafe();
     }
     
-    public void addNodes(String[] exitNodes) {
-        
-    }
-
     public void addNodes(ExitNodeInfo[] exitNodes) {
         for (ExitNodeInfo server : exitNodes) {
             this.exitNodeList.add(server);
@@ -101,6 +97,10 @@ public class ExitNodeList implements Serializable {
 
     public boolean isExitNodeSharedService(long serviceId) {
         return localSharedExitServices.containsKey(serviceId);
+    }
+    
+    public ExitNodeInfo getExitNodeSharedService(long serviceId) {
+        return localSharedExitServices.get(serviceId);  //TODO(ben) does this have a default? 
     }
 
     public boolean allowLocalExitConnection(long serviceId, String address, int port) {
