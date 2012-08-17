@@ -4239,8 +4239,12 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
     public LinkedList<String> getExitPolicyStrings() {
         ExitNodeList instance = ExitNodeList.getInstance();
         long key = instance.getLocalServiceKey();
-        return instance.getExitNodeSharedService(key).getPolicyStrings();
-        
+        ExitNodeInfo info = instance.getExitNodeSharedService(key);
+        if (info != null) {
+            return info.getPolicyStrings();
+        } else {
+            return new LinkedList<String>();
+        }        
     }
 
     @Override
