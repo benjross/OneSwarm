@@ -14,6 +14,7 @@ import java.util.TimerTask;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
+
 import org.gudy.azureus2.core3.config.COConfigurationManager;
 import org.xml.sax.SAXException;
 
@@ -90,20 +91,6 @@ public class ExitNodeList {
         // TODO (nick) serialize and save list to disk
     }
 
-    //    public void enableNodeByKey(long serviceId, boolean setTo) {
-    //        this.getExitNodeSharedService(serviceId).setEnabled(setTo);
-    //        // TODO(ben) on setTo == true, either create new serviceID or restore old one
-    //    }
-
-    public ExitNodeInfo getServerByKey(long serviceId) {
-        for (ExitNodeInfo node : exitNodeList) {
-            if (node.getId() == serviceId) {
-                return node;
-            }
-        }
-        return null;
-    }
-
     public ExitNodeInfo pickServer(String url, int port) {
         for (ExitNodeInfo server : exitNodeList) {
             if (server.allowsConnectionTo(url, port)) {
@@ -160,10 +147,6 @@ public class ExitNodeList {
         return localSharedExitServices.containsKey(serviceId);
     }
 
-    public ExitNodeInfo getExitNodeSharedService(long serviceId) {
-        return localSharedExitServices.get(serviceId);  //TODO(ben) does this have a default?
-    }
-
     public boolean allowLocalExitConnection(long serviceId, String address, int port) {
         if (isExitNodeSharedService(serviceId)) {
             return localSharedExitServices.get(serviceId).allowsConnectionTo(address, port);
@@ -183,18 +166,12 @@ public class ExitNodeList {
         XMLHelper.parse(conn.getInputStream(), new ExitNodeInfoHandler(exitNodes));
         conn.disconnect();
 
-        // TODO (nick) remove when partial update is ready
-        exitNodeList.clear();
-
         for (ExitNodeInfo node : exitNodes) {
             // TODO (nick) implement partial update functionality and allow
             // nodes to be removed if they have a flag
-            // if (exitNodeList.contains(node)) {
-            // exitNodeList.remove(node);
-            // }
-            // if(!node.flaggedForRemoval){
-            // exitNodeList.add(node);
-            // }
+            if (exitNodeList.contains(node)) {
+                exitNodeList.remove(node);
+            }
             exitNodeList.add(node);
         }
     }

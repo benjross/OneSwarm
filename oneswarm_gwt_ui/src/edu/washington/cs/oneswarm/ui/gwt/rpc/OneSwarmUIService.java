@@ -180,8 +180,8 @@ public interface OneSwarmUIService extends RemoteService {
     void cancelBackendTask(String session, int inID);
 
     /**
-	 * 
-	 */
+     * 
+     */
     String debug(String session, String which);
 
     FriendInfoLite[] getLanOneSwarmUsers(String session);
@@ -292,16 +292,16 @@ public interface OneSwarmUIService extends RemoteService {
     void addClientService(String sessionID, long id, String name);
 
     String activateClientService(String session, String name, long id);
-    
+
     void getNewServiceKey();
-    
+
     void setExitNodeSharedService(String exitNodes);
-    
-    LinkedList<String> getExitPolicyStrings();
-    
+
     String getNickname();
-    
+
     void setNickname(String nickname);
 
     LinkedList<String> getPresetPolicy(String sender);
+
+    LinkedList<String> getExitPolicyStrings();
 }

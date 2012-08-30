@@ -11,6 +11,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.DecoratedTabPanel;
 import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -50,10 +51,12 @@ public class SettingsDialog extends OneSwarmDialogBox {
         mSwarmsBrowser = swarmsBrowser;
 
         GWT.runAsync(new RunAsyncCallback() {
+            @Override
             public void onFailure(Throwable caught) {
                 Window.alert("Error loading settings: " + caught.toString());
             }
 
+            @Override
             public void onSuccess() {
                 // indicates prefetch
                 if (mInitialSelectedTab < 0) {
@@ -83,9 +86,11 @@ public class SettingsDialog extends OneSwarmDialogBox {
         PrivacySettingsPanel privacySettingsPanel = new PrivacySettingsPanel();
         RemoteAccessPanel remoteAccessPanel = new RemoteAccessPanel();
         Sha1Ed2kSettingsPanel sha1HashSpeedPanel = new Sha1Ed2kSettingsPanel();
-        
-        NicknamePanel nicknamePanel = new NicknamePanel();
-        ExitPolicyPanel exitPolicyPanel = new ExitPolicyPanel();
+
+        final NicknamePanel nicknamePanel = new NicknamePanel();
+        final ServiceStatisticsPanel serviceStatsPanel = new ServiceStatisticsPanel();
+        final ExitPolicyPanel exitPolicyPanel = new ExitPolicyPanel();
+        final CheckBox enabler = new CheckBox("Enable Service Sharing");
 
         // DataUsage dataUsagePanel = new DataUsage();
         CommunityServersSettingsPanel communityPanel = new CommunityServersSettingsPanel();
@@ -102,33 +107,38 @@ public class SettingsDialog extends OneSwarmDialogBox {
         // windows
         OneSwarmRPCClient.getService().getPlatform(OneSwarmRPCClient.getSessionID(),
                 new AsyncCallback<String>() {
-                    public void onFailure(Throwable caught) {
-                        caught.printStackTrace();
-                    }
+            @Override
+            public void onFailure(Throwable caught) {
+                caught.printStackTrace();
+            }
 
-                    public void onSuccess(String result) {
-                        if (result.equals("windows")) {
-                            refreshAssociationsButton.addStyleName(OneSwarmCss.SMALL_BUTTON);
-                            refreshAssociationsButton.addClickHandler(new ClickHandler() {
-                                public void onClick(ClickEvent event) {
-                                    OneSwarmRPCClient.getService().refreshFileAssociations(
-                                            OneSwarmRPCClient.getSessionID(),
-                                            new AsyncCallback<Void>() {
-                                                public void onFailure(Throwable caught) {
-                                                    caught.printStackTrace();
-                                                }
+            @Override
+            public void onSuccess(String result) {
+                if (result.equals("windows")) {
+                    refreshAssociationsButton.addStyleName(OneSwarmCss.SMALL_BUTTON);
+                    refreshAssociationsButton.addClickHandler(new ClickHandler() {
+                        @Override
+                        public void onClick(ClickEvent event) {
+                            OneSwarmRPCClient.getService().refreshFileAssociations(
+                                    OneSwarmRPCClient.getSessionID(),
+                                    new AsyncCallback<Void>() {
+                                        @Override
+                                        public void onFailure(Throwable caught) {
+                                            caught.printStackTrace();
+                                        }
 
-                                                public void onSuccess(Void result) {
-                                                    System.out
-                                                            .println("refresh file associations: success");
-                                                }
-                                            });
-                                }
-                            });
-                            filesTab.add(refreshAssociationsButton);
+                                        @Override
+                                        public void onSuccess(Void result) {
+                                            System.out
+                                            .println("refresh file associations: success");
+                                        }
+                                    });
                         }
-                    }
-                });
+                    });
+                    filesTab.add(refreshAssociationsButton);
+                }
+            }
+        });
         filesTab.add(save_loc);
         filesTab.add(magic_dirs);
         filesTab.add(sha1HashSpeedPanel);
@@ -156,16 +166,36 @@ public class SettingsDialog extends OneSwarmDialogBox {
         }
 
         mTabs.add(networkTab, msg.settings_tab_network());
-        
-        VerticalPanel exitPolicyTab = new VerticalPanel();
-        exitPolicyTab.add(nicknamePanel);
 
-        DisclosurePanel exitPolicyDisclosurePanel = new DisclosurePanel(msg.settings_exitpolicy_policy_title());
+        VerticalPanel exitPolicyTab = new VerticalPanel();
+
+        final DisclosurePanel exitPolicyDisclosurePanel = new DisclosurePanel(msg.settings_exitpolicy_policy_title());
         exitPolicyDisclosurePanel.setOpen(true);
-       
+
+        enabler.setValue(true);
+
+        exitPolicyTab.add(enabler);
+        exitPolicyTab.add(nicknamePanel);
         exitPolicyDisclosurePanel.add(exitPolicyPanel);
         exitPolicyTab.add(exitPolicyDisclosurePanel);
-        
+        exitPolicyTab.add(serviceStatsPanel);
+
+        enabler.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+                exitPolicyDisclosurePanel.setAnimationEnabled(enabler.getValue());
+                exitPolicyDisclosurePanel.setOpen(enabler.getValue());
+                nicknamePanel.nickname_box.setEnabled(enabler.getValue());
+                //                exitPolicyPanel.exitNodes.setEnabled(enabler.getValue());
+                //                exitPolicyPanel.everythingButton.setEnabled(enabler.getValue());
+                //                exitPolicyPanel.safeButton.setEnabled(enabler.getValue());
+                //                exitPolicyPanel.localButton.setEnabled(enabler.getValue());
+                //                exitPolicyPanel.customButton.setEnabled(enabler.getValue());
+                serviceStatsPanel.newServiceKeyButton.setEnabled(enabler.getValue());
+            }
+        });
+
+
         mTabs.add(exitPolicyTab, msg.settings_exitpolicy_title());
 
         VerticalPanel uiTab = new VerticalPanel();
@@ -206,6 +236,7 @@ public class SettingsDialog extends OneSwarmDialogBox {
 
         // mUIRoot = inRoot;
 
+
         VerticalPanel main_vp = new VerticalPanel();
 
         main_vp.add(selectLabel);
@@ -220,6 +251,7 @@ public class SettingsDialog extends OneSwarmDialogBox {
         Button cancelButton = new Button(msg.button_cancel());
 
         cancelButton.addClickHandler(new ClickHandler() {
+            @Override
             public void onClick(ClickEvent event) {
                 cancel = true;
                 hide();
@@ -227,6 +259,7 @@ public class SettingsDialog extends OneSwarmDialogBox {
         });
 
         saveButton.addClickHandler(new ClickHandler() {
+            @Override
             public void onClick(ClickEvent event) {
                 hide();
             }
@@ -251,6 +284,7 @@ public class SettingsDialog extends OneSwarmDialogBox {
         return this;
     }
 
+    @Override
     public void hide() {
         if (!cancel) {
             for (SettingsPanel p : settingsPanels) {
@@ -281,6 +315,7 @@ public class SettingsDialog extends OneSwarmDialogBox {
              * a hack, synchronizing after a second works.
              */
             (new Timer() {
+                @Override
                 public void run() {
                     mSwarmsBrowser.sync_settings();
                 }

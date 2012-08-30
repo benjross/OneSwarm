@@ -269,7 +269,7 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
     }
 
     public static void loadLogger(boolean force) throws SecurityException, FileNotFoundException,
-            IOException {
+    IOException {
         File logConfig = new File("./logging.properties");
         if (logConfig.exists()) {
             System.err.println("Log file exists, attempting load...");
@@ -340,8 +340,8 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
     }
 
     /**
-	 *
-	 */
+     *
+     */
     private static final long serialVersionUID = -3609953294130895972L;
 
     Thread metaInfoPruner = null;
@@ -906,17 +906,17 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
                 boolean bytesExchanged = d.getStats().getUploadAverage() > 0
                         || d.getStats().getDownloadAverage() > 0;
 
-                PeerManager peerManager = d.getPeerManager();
-                boolean peersOrSeeds = false;
-                if (peerManager != null) {
-                    peersOrSeeds = peerManager.getPeers().length > 0;
-                }
-                if (d.getState() == Download.ST_DOWNLOADING || bytesExchanged || peersOrSeeds) {
+                        PeerManager peerManager = d.getPeerManager();
+                        boolean peersOrSeeds = false;
+                        if (peerManager != null) {
+                            peersOrSeeds = peerManager.getPeers().length > 0;
+                        }
+                        if (d.getState() == Download.ST_DOWNLOADING || bytesExchanged || peersOrSeeds) {
 
-                    TorrentFile biggestFile = CoreTools.getBiggestVideoFile(d);
-                    outInfo.add(TorrentInfoFactory.create(coreInterface.getF2FInterface(), d,
-                            biggestFile == null ? "" : biggestFile.getName()));
-                }
+                            TorrentFile biggestFile = CoreTools.getBiggestVideoFile(d);
+                            outInfo.add(TorrentInfoFactory.create(coreInterface.getF2FInterface(), d,
+                                    biggestFile == null ? "" : biggestFile.getName()));
+                        }
             }
 
             torrentList = new TorrentList();
@@ -1134,7 +1134,7 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
     @Override
     public void addDownloadFromLocalTorrentDefaultSaveLocation(String session,
             String inPathToTorrent, ArrayList<PermissionsGroup> inPermissions)
-            throws OneSwarmException {
+                    throws OneSwarmException {
         try {
             if (!passedSessionIDCheck(session)) {
                 throw new Exception("bad cookie");
@@ -1154,7 +1154,7 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
 
             if (cand.exists() == false || cand.isDirectory() == false) {
                 System.err
-                        .println("default save directory doesn't exist (or is not a directory). using torrent parent dir instead...");
+                .println("default save directory doesn't exist (or is not a directory). using torrent parent dir instead...");
                 cand = torrent.getParentFile();
             }
 
@@ -1718,7 +1718,7 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
                 final TextSearchResultLite trl = new TextSearchResultLite(age, channelId,
                         collectionId, collectionName, connectionId, fileListFile.getFileName(),
                         fileListFile.getLength(), friendDelay, throughFriends, t.getCollection()
-                                .getAddedTimeUTC());
+                        .getAddedTimeUTC());
                 if (t.isInLibrary()) {
 
                     final org.gudy.azureus2.core3.download.DownloadManager dm = AzureusCoreImpl
@@ -1729,7 +1729,7 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
                         try {
                             trl.setInLibrary(TorrentInfoFactory.create(coreInterface
                                     .getF2FInterface(), dm, biggestVideoFile == null ? ""
-                                    : biggestVideoFile.getRelativePath()));
+                                            : biggestVideoFile.getRelativePath()));
                         } catch (AzureusCoreException e) {
                             // TODO Auto-generated catch block
                             e.printStackTrace();
@@ -2749,16 +2749,16 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
                     File out = dm.getSaveLocation();
                     UpdatingFileTree tree = new UpdatingFileTree(out,
                             new UpdatingFileTreeListener() {
-                                @Override
-                                public void broadcastChange(UpdatingFileTree path, boolean isDelete) {
-                                }
-                            });
+                        @Override
+                        public void broadcastChange(UpdatingFileTree path, boolean isDelete) {
+                        }
+                    });
                     if (MagicDecider.checkAudioDirectory(tree)) {
                         sb.append("removing audio torrent: " + dm.getDisplayName() + " / "
                                 + out.getAbsolutePath() + "\n");
                         try {
                             AzureusCoreImpl.getSingleton().getGlobalManager()
-                                    .removeDownloadManager(dm, false, false);
+                            .removeDownloadManager(dm, false, false);
                         } catch (AzureusCoreException e) {
                             e.printStackTrace();
                         } catch (GlobalManagerDownloadRemovalVetoException e) {
@@ -3051,10 +3051,10 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
         } else if (which.equals("backendtask")) {
             final int taskID = BackendTaskManager.get().createTask("test",
                     new CancellationListener() {
-                        @Override
-                        public void cancelled(int inID) {
-                        }
-                    });
+                @Override
+                public void cancelled(int inID) {
+                }
+            });
             (new Thread() {
                 @Override
                 public void run() {
@@ -3342,10 +3342,10 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
 
             if (path == null) {
                 dm.getDownloadState()
-                        .setListAttribute(FileCollection.ONESWARM_TAGS_ATTRIBUTE, null);
+                .setListAttribute(FileCollection.ONESWARM_TAGS_ATTRIBUTE, null);
             } else {
                 dm.getDownloadState()
-                        .setListAttribute(FileCollection.ONESWARM_TAGS_ATTRIBUTE, path);
+                .setListAttribute(FileCollection.ONESWARM_TAGS_ATTRIBUTE, path);
                 for (String p : path) {
                     System.out.println("adding path: " + p + " to " + dm.getDisplayName());
                 }
@@ -3724,7 +3724,7 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
 
             StringSelection transferString = new StringSelection(link);
             Toolkit.getDefaultToolkit().getSystemClipboard()
-                    .setContents(transferString, transferString);
+            .setContents(transferString, transferString);
 
             return link;
         } catch (Exception e) {
@@ -3870,7 +3870,7 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
         if (hasIt == false) {
             CommunityRecord rec = new CommunityRecord(Arrays.asList(new String[] {
                     CommunityServerAddPanel.DEFAULT_COMMUNITY_SERVER, "", "", "Community contacts",
-                    "true;false;false;false;50" }), 0);
+            "true;false;false;false;50" }), 0);
 
             existingCommunityServers.addAll(Arrays.asList(rec.toTokens()));
 
@@ -3914,11 +3914,11 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
         final int speedCheckId = coreInterface.getF2FInterface().performSpeedCheck();
         final int taskId = BackendTaskManager.get().createTask("Speed check",
                 new CancellationListener() {
-                    @Override
-                    public void cancelled(int inID) {
-                        coreInterface.getF2FInterface().cancelSpeedCheck(speedCheckId);
-                    }
-                });
+            @Override
+            public void cancelled(int inID) {
+                coreInterface.getF2FInterface().cancelSpeedCheck(speedCheckId);
+            }
+        });
 
         Thread t = new Thread(new Runnable() {
             @Override
@@ -4186,7 +4186,7 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
         checkSession(session);
 
         ClientServiceInfo[] returnArray = new ClientServiceInfo[ServiceSharingManager.getInstance().clientServices
-                .size()];
+                                                                .size()];
         Iterator<ClientService> services = ServiceSharingManager.getInstance().clientServices
                 .values().iterator();
         for (int i = 0; services.hasNext(); i++) {
@@ -4225,17 +4225,20 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
             throw new RuntimeException("invalid cookie");
         }
     }
-    
+
+    @Override
     public void getNewServiceKey() {
         ExitNodeList.getInstance().resetLocalServiceKey();
     }
-    
+
+    @Override
     public void setExitNodeSharedService(String exitNodes) {
         ExitNodeList instance = ExitNodeList.getInstance();
         long key = instance.getLocalServiceKey();
         instance.getExitNodeSharedService(key).setExitPolicy(exitNodes.split("\\r?\\n"));
     }
-    
+
+    @Override
     public LinkedList<String> getExitPolicyStrings() {
         ExitNodeList instance = ExitNodeList.getInstance();
         long key = instance.getLocalServiceKey();
@@ -4243,36 +4246,41 @@ public class OneSwarmUIServiceImpl extends RemoteServiceServlet implements OneSw
         if (info != null) {
             return info.getPolicyStrings();
         } else {
-            return new LinkedList<String>();
-        }        
+            return ExitNodeInfo.SAFE;
+        }
     }
 
     @Override
     public String getNickname() {
         ExitNodeList instance = ExitNodeList.getInstance();
         long key = instance.getLocalServiceKey();
-        return instance.getExitNodeSharedService(key).getNickname();
+        ExitNodeInfo info = instance.getExitNodeSharedService(key);
+        if (info != null) {
+            return info.getNickname();
+        } else {
+            return "";
+        }
     }
-    
+
+    @Override
     public void setNickname(String nickname) {
         ExitNodeList instance = ExitNodeList.getInstance();
         long key = instance.getLocalServiceKey();
         instance.getExitNodeSharedService(key).setNickname(nickname);
     }
-    
+
+    @Override
     public LinkedList<String> getPresetPolicy(String sender) {
-//        ExitNodeList instance = ExitNodeList.getInstance();
-//        long key = instance.getLocalServiceKey();
-//        ExitNodeInfo exit =  instance.getExitNodeSharedService(key);
-//        
-        if (sender.equals("everything")) {
+        //        ExitNodeList instance = ExitNodeList.getInstance();
+        //        long key = instance.getLocalServiceKey();
+        //        ExitNodeInfo exit =  instance.getExitNodeSharedService(key);
+        //
+        if (sender.equals("Everything")) {
             return ExitNodeInfo.EVERYTHING;
-        } else if (sender.equals("local")) {
+        } else if (sender.equals("Local")) {
             return ExitNodeInfo.LOCAL;
-        } else if (sender.equals("safe")) {
+        } else  {
             return ExitNodeInfo.SAFE;
-        } else {
-            return getExitPolicyStrings();
         }
     }
 }
